@@ -33,17 +33,21 @@
             this.tabs_menu = new AntdUI.Tabs();
             this.download = new AntdUI.TabPage();
             this.panel1 = new AntdUI.Panel();
-            this.flowLayoutPanel1 = new AntdUI.In.FlowLayoutPanel();
-            this.button1 = new AntdUI.Button();
-            this.button2 = new AntdUI.Button();
-            this.button3 = new AntdUI.Button();
-            this.exportdata = new AntdUI.TabPage();
+            this.listView_ResistivityTool_downloadlist = new AntdUI.Table();
+            this.progress2 = new AntdUI.Progress();
+            this.progress_memoryused = new AntdUI.Progress();
+            this.flowLayoutPanel_head = new AntdUI.In.FlowLayoutPanel();
             this.pageHeader2 = new AntdUI.PageHeader();
+            this.label_CAN = new AntdUI.Label();
             this.button_BlueCAN = new AntdUI.Button();
-            this.label1 = new AntdUI.Label();
+            this.button_readmemory = new AntdUI.Button();
+            this.button_dump = new AntdUI.Button();
+            this.button_clear = new AntdUI.Button();
+            this.exportdata = new AntdUI.TabPage();
             this.tabs_menu.SuspendLayout();
             this.download.SuspendLayout();
-            this.flowLayoutPanel1.SuspendLayout();
+            this.panel1.SuspendLayout();
+            this.flowLayoutPanel_head.SuspendLayout();
             this.pageHeader2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -54,7 +58,7 @@
             this.pageHeader1.Location = new System.Drawing.Point(0, 0);
             this.pageHeader1.Name = "pageHeader1";
             this.pageHeader1.ShowButton = true;
-            this.pageHeader1.Size = new System.Drawing.Size(547, 35);
+            this.pageHeader1.Size = new System.Drawing.Size(636, 35);
             this.pageHeader1.TabIndex = 0;
             this.pageHeader1.Text = "pageHeader1";
             // 
@@ -69,7 +73,7 @@
             this.tabs_menu.Name = "tabs_menu";
             this.tabs_menu.Pages.Add(this.download);
             this.tabs_menu.Pages.Add(this.exportdata);
-            this.tabs_menu.Size = new System.Drawing.Size(547, 601);
+            this.tabs_menu.Size = new System.Drawing.Size(636, 601);
             this.tabs_menu.Style = styleLine1;
             this.tabs_menu.TabIndex = 1;
             this.tabs_menu.Text = "tabs1";
@@ -77,81 +81,109 @@
             // download
             // 
             this.download.Controls.Add(this.panel1);
-            this.download.Controls.Add(this.flowLayoutPanel1);
+            this.download.Controls.Add(this.flowLayoutPanel_head);
             this.download.Dock = System.Windows.Forms.DockStyle.Fill;
             this.download.Location = new System.Drawing.Point(0, 36);
             this.download.Name = "download";
-            this.download.Size = new System.Drawing.Size(547, 565);
+            this.download.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
+            this.download.Size = new System.Drawing.Size(636, 565);
             this.download.TabIndex = 0;
             this.download.Text = "下载";
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.listView_ResistivityTool_downloadlist);
+            this.panel1.Controls.Add(this.progress2);
+            this.panel1.Controls.Add(this.progress_memoryused);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 81);
+            this.panel1.Location = new System.Drawing.Point(0, 49);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(547, 484);
+            this.panel1.Padding = new System.Windows.Forms.Padding(10);
+            this.panel1.Size = new System.Drawing.Size(636, 516);
             this.panel1.TabIndex = 1;
             this.panel1.Text = "panel1";
             // 
-            // flowLayoutPanel1
+            // listView_ResistivityTool_downloadlist
             // 
-            this.flowLayoutPanel1.AutoSize = true;
-            this.flowLayoutPanel1.Controls.Add(this.pageHeader2);
-            this.flowLayoutPanel1.Controls.Add(this.button1);
-            this.flowLayoutPanel1.Controls.Add(this.button3);
-            this.flowLayoutPanel1.Controls.Add(this.button2);
-            this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
-            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(547, 81);
-            this.flowLayoutPanel1.TabIndex = 0;
+            this.listView_ResistivityTool_downloadlist.Bordered = true;
+            this.listView_ResistivityTool_downloadlist.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listView_ResistivityTool_downloadlist.EmptyHeader = true;
+            this.listView_ResistivityTool_downloadlist.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.listView_ResistivityTool_downloadlist.Gap = 8;
+            this.listView_ResistivityTool_downloadlist.Gaps = new System.Drawing.Size(8, 8);
+            this.listView_ResistivityTool_downloadlist.Location = new System.Drawing.Point(10, 44);
+            this.listView_ResistivityTool_downloadlist.Name = "listView_ResistivityTool_downloadlist";
+            this.listView_ResistivityTool_downloadlist.RowHeight = 25;
+            this.listView_ResistivityTool_downloadlist.Size = new System.Drawing.Size(616, 439);
+            this.listView_ResistivityTool_downloadlist.TabIndex = 6;
+            this.listView_ResistivityTool_downloadlist.Text = "table1";
             // 
-            // button1
+            // progress2
             // 
-            this.button1.Location = new System.Drawing.Point(3, 44);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(133, 34);
-            this.button1.TabIndex = 1;
-            this.button1.Text = "获取数据列表";
+            this.progress2.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.progress2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.progress2.Font = new System.Drawing.Font("微软雅黑", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.progress2.Location = new System.Drawing.Point(10, 10);
+            this.progress2.Name = "progress2";
+            this.progress2.Padding = new System.Windows.Forms.Padding(20, 0, 20, 0);
+            this.progress2.Size = new System.Drawing.Size(616, 34);
+            this.progress2.Steps = 27;
+            this.progress2.TabIndex = 2;
+            this.progress2.Text = "速度000byte/s,剩余00min00s";
+            this.progress2.UseSystemText = true;
+            this.progress2.UseTextCenter = true;
             // 
-            // button2
+            // progress_memoryused
             // 
-            this.button2.Location = new System.Drawing.Point(223, 44);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 2;
-            this.button2.Text = "清空内存";
+            this.progress_memoryused.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.progress_memoryused.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.progress_memoryused.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.progress_memoryused.Location = new System.Drawing.Point(10, 483);
+            this.progress_memoryused.Name = "progress_memoryused";
+            this.progress_memoryused.Padding = new System.Windows.Forms.Padding(20, 0, 20, 0);
+            this.progress_memoryused.Size = new System.Drawing.Size(616, 23);
+            this.progress_memoryused.TabIndex = 1;
+            this.progress_memoryused.Text = "已用内存";
+            this.progress_memoryused.TextUnit = "";
+            this.progress_memoryused.UseSystemText = true;
             // 
-            // button3
+            // flowLayoutPanel_head
             // 
-            this.button3.Location = new System.Drawing.Point(142, 44);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 3;
-            this.button3.Text = "下载";
-            // 
-            // exportdata
-            // 
-            this.exportdata.Location = new System.Drawing.Point(-1094, -1130);
-            this.exportdata.Name = "exportdata";
-            this.exportdata.Size = new System.Drawing.Size(547, 565);
-            this.exportdata.TabIndex = 1;
-            this.exportdata.Text = "原始数据";
+            this.flowLayoutPanel_head.AutoSize = true;
+            this.flowLayoutPanel_head.Controls.Add(this.pageHeader2);
+            this.flowLayoutPanel_head.Controls.Add(this.button_readmemory);
+            this.flowLayoutPanel_head.Controls.Add(this.button_dump);
+            this.flowLayoutPanel_head.Controls.Add(this.button_clear);
+            this.flowLayoutPanel_head.Dock = System.Windows.Forms.DockStyle.Top;
+            this.flowLayoutPanel_head.Location = new System.Drawing.Point(0, 5);
+            this.flowLayoutPanel_head.Name = "flowLayoutPanel_head";
+            this.flowLayoutPanel_head.Size = new System.Drawing.Size(636, 44);
+            this.flowLayoutPanel_head.TabIndex = 0;
             // 
             // pageHeader2
             // 
-            this.pageHeader2.Controls.Add(this.label1);
+            this.pageHeader2.Controls.Add(this.label_CAN);
             this.pageHeader2.Controls.Add(this.button_BlueCAN);
             this.pageHeader2.Font = new System.Drawing.Font("微软雅黑", 12F);
             this.pageHeader2.HandCursor = System.Windows.Forms.Cursors.Arrow;
             this.pageHeader2.Location = new System.Drawing.Point(3, 3);
             this.pageHeader2.Name = "pageHeader2";
-            this.pageHeader2.Size = new System.Drawing.Size(547, 35);
+            this.pageHeader2.Size = new System.Drawing.Size(405, 38);
             this.pageHeader2.SubGap = 0;
             this.pageHeader2.TabIndex = 4;
             this.pageHeader2.Text = "数据发送";
             this.pageHeader2.UseTitleFont = true;
+            // 
+            // label_CAN
+            // 
+            this.label_CAN.AutoSizeMode = AntdUI.TAutoSize.Width;
+            this.label_CAN.Dock = System.Windows.Forms.DockStyle.Left;
+            this.label_CAN.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.label_CAN.Location = new System.Drawing.Point(232, 0);
+            this.label_CAN.Name = "label_CAN";
+            this.label_CAN.Size = new System.Drawing.Size(6, 38);
+            this.label_CAN.TabIndex = 1;
+            this.label_CAN.Text = "-";
             // 
             // button_BlueCAN
             // 
@@ -162,26 +194,64 @@
             this.button_BlueCAN.IconSvg = "SettingOutlined";
             this.button_BlueCAN.Location = new System.Drawing.Point(106, 0);
             this.button_BlueCAN.Name = "button_BlueCAN";
-            this.button_BlueCAN.Padding = new System.Windows.Forms.Padding(0, 0, 0, 13);
+            this.button_BlueCAN.Padding = new System.Windows.Forms.Padding(0, 0, 0, 10);
             this.button_BlueCAN.Size = new System.Drawing.Size(126, 48);
             this.button_BlueCAN.TabIndex = 0;
             this.button_BlueCAN.Text = "BlueCAN";
+            this.button_BlueCAN.Click += new System.EventHandler(this.button_BlueCAN_Click);
             // 
-            // label1
+            // button_readmemory
             // 
-            this.label1.AutoSizeMode = AntdUI.TAutoSize.Width;
-            this.label1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.label1.Location = new System.Drawing.Point(232, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(47, 35);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "label1";
+            this.button_readmemory.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button_readmemory.AutoSizeMode = AntdUI.TAutoSize.Auto;
+            this.button_readmemory.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.button_readmemory.Location = new System.Drawing.Point(411, 5);
+            this.button_readmemory.Margin = new System.Windows.Forms.Padding(0, 5, 0, 0);
+            this.button_readmemory.Name = "button_readmemory";
+            this.button_readmemory.Size = new System.Drawing.Size(96, 36);
+            this.button_readmemory.TabIndex = 5;
+            this.button_readmemory.Text = "获取数据列表";
+            this.button_readmemory.Type = AntdUI.TTypeMini.Primary;
+            this.button_readmemory.Click += new System.EventHandler(this.button_readmemory_Click);
+            // 
+            // button_dump
+            // 
+            this.button_dump.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button_dump.AutoSizeMode = AntdUI.TAutoSize.Auto;
+            this.button_dump.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.button_dump.Location = new System.Drawing.Point(507, 5);
+            this.button_dump.Margin = new System.Windows.Forms.Padding(0, 5, 0, 0);
+            this.button_dump.Name = "button_dump";
+            this.button_dump.Size = new System.Drawing.Size(48, 36);
+            this.button_dump.TabIndex = 6;
+            this.button_dump.Text = "下载";
+            this.button_dump.Type = AntdUI.TTypeMini.Primary;
+            // 
+            // button_clear
+            // 
+            this.button_clear.AutoSizeMode = AntdUI.TAutoSize.Auto;
+            this.button_clear.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.button_clear.Location = new System.Drawing.Point(555, 5);
+            this.button_clear.Margin = new System.Windows.Forms.Padding(0, 5, 0, 0);
+            this.button_clear.Name = "button_clear";
+            this.button_clear.Size = new System.Drawing.Size(72, 36);
+            this.button_clear.TabIndex = 7;
+            this.button_clear.Text = "清空内存";
+            this.button_clear.Type = AntdUI.TTypeMini.Error;
+            // 
+            // exportdata
+            // 
+            this.exportdata.Location = new System.Drawing.Point(-1272, -1130);
+            this.exportdata.Name = "exportdata";
+            this.exportdata.Size = new System.Drawing.Size(636, 565);
+            this.exportdata.TabIndex = 1;
+            this.exportdata.Text = "原始数据";
             // 
             // GSCDownload
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(547, 636);
+            this.ClientSize = new System.Drawing.Size(636, 636);
             this.Controls.Add(this.tabs_menu);
             this.Controls.Add(this.pageHeader1);
             this.Name = "GSCDownload";
@@ -189,7 +259,9 @@
             this.tabs_menu.ResumeLayout(false);
             this.download.ResumeLayout(false);
             this.download.PerformLayout();
-            this.flowLayoutPanel1.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
+            this.flowLayoutPanel_head.ResumeLayout(false);
+            this.flowLayoutPanel_head.PerformLayout();
             this.pageHeader2.ResumeLayout(false);
             this.pageHeader2.PerformLayout();
             this.ResumeLayout(false);
@@ -202,14 +274,17 @@
         private AntdUI.Tabs tabs_menu;
         private AntdUI.TabPage download;
         private AntdUI.TabPage exportdata;
-        private AntdUI.In.FlowLayoutPanel flowLayoutPanel1;
         private AntdUI.Panel panel1;
-        private AntdUI.Button button1;
-        private AntdUI.Button button2;
-        private AntdUI.Button button3;
         private AntdUI.PageHeader pageHeader2;
         private AntdUI.Button button_BlueCAN;
-        private AntdUI.Label label1;
+        private AntdUI.Label label_CAN;
+        private AntdUI.Button button_readmemory;
+        private AntdUI.Button button_dump;
+        private AntdUI.Button button_clear;
+        private AntdUI.In.FlowLayoutPanel flowLayoutPanel_head;
+        private AntdUI.Progress progress_memoryused;
+        private AntdUI.Progress progress2;
+        private AntdUI.Table listView_ResistivityTool_downloadlist;
     }
 }
 
