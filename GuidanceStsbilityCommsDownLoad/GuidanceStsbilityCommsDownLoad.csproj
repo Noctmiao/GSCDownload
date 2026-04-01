@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseTool.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="DataPacketGSC.cs" />
     <Compile Include="GSCDownload.cs">

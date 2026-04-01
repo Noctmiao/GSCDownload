@@ -44,6 +44,7 @@
             this.button_dump = new AntdUI.Button();
             this.button_clear = new AntdUI.Button();
             this.exportdata = new AntdUI.TabPage();
+            this.listViewRuns = new System.Windows.Forms.ListView();
             this.tabs_menu.SuspendLayout();
             this.download.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -92,6 +93,7 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.listViewRuns);
             this.panel1.Controls.Add(this.listView_ResistivityTool_downloadlist);
             this.panel1.Controls.Add(this.progress2);
             this.panel1.Controls.Add(this.progress_memoryused);
@@ -106,12 +108,11 @@
             // listView_ResistivityTool_downloadlist
             // 
             this.listView_ResistivityTool_downloadlist.Bordered = true;
-            this.listView_ResistivityTool_downloadlist.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listView_ResistivityTool_downloadlist.EmptyHeader = true;
             this.listView_ResistivityTool_downloadlist.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
             this.listView_ResistivityTool_downloadlist.Gap = 8;
             this.listView_ResistivityTool_downloadlist.Gaps = new System.Drawing.Size(8, 8);
-            this.listView_ResistivityTool_downloadlist.Location = new System.Drawing.Point(10, 44);
+            this.listView_ResistivityTool_downloadlist.Location = new System.Drawing.Point(268, 50);
             this.listView_ResistivityTool_downloadlist.Name = "listView_ResistivityTool_downloadlist";
             this.listView_ResistivityTool_downloadlist.RowHeight = 25;
             this.listView_ResistivityTool_downloadlist.Size = new System.Drawing.Size(616, 439);
@@ -247,6 +248,15 @@
             this.exportdata.TabIndex = 1;
             this.exportdata.Text = "原始数据";
             // 
+            // listViewRuns
+            // 
+            this.listViewRuns.HideSelection = false;
+            this.listViewRuns.Location = new System.Drawing.Point(109, 193);
+            this.listViewRuns.Name = "listViewRuns";
+            this.listViewRuns.Size = new System.Drawing.Size(121, 97);
+            this.listViewRuns.TabIndex = 7;
+            this.listViewRuns.UseCompatibleStateImageBehavior = false;
+            // 
             // GSCDownload
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -285,6 +295,7 @@
         private AntdUI.Progress progress_memoryused;
         private AntdUI.Progress progress2;
         private AntdUI.Table listView_ResistivityTool_downloadlist;
+        private System.Windows.Forms.ListView listViewRuns;
     }
 }
 

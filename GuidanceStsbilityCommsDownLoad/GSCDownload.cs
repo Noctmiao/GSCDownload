@@ -1,4 +1,5 @@
 ﻿using AntdUI;
+using GuidanceStsbilityComms;
 using LsySkin;
 using MultiPort;
 using System;
@@ -43,7 +44,13 @@ namespace GuidanceStsbilityCommsDownLoad
         private uint memorySize;
         private uint memoryUsed;
 
-        Timer timerReceive;
+        // tools
+        public static BaseTool GSCTool;
+
+
+        Timer timerReceive;// 原lwdtools主界面
+        Timer timerDump1;
+        Timer timerDump2;
 
 
         public GSCDownload()
@@ -59,7 +66,16 @@ namespace GuidanceStsbilityCommsDownLoad
             button_clear.Enabled = false;
             timerReceive = new Timer();
             timerReceive.Interval = 100;
-            timerReceive.Tick += new System.EventHandler(timer1_Tick);
+            timerReceive.Tick += new System.EventHandler(timerReceive_Tick);
+
+            timerDump1 = new Timer();
+            timerDump1.Interval = 100;
+            timerDump1.Enabled = false;
+            timerDump1.Tick += new System.EventHandler(timer1_Tick);
+
+            timerDump2 = new Timer();
+            timerDump2.Interval = 100;
+            timerDump2.Enabled = false;
 
             // table init
             Init_listView_ResistivityTool_downloadlist();
@@ -234,8 +250,25 @@ namespace GuidanceStsbilityCommsDownLoad
                 }
             }
         }
-
         private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (IsWaitingForResponse == true)
+            {
+                //if (numOfTry < numOfMaxTry)
+                //{
+                //    if (LWDTools != null) LWDTools.Send(sentDataPacket.ToBytes());
+                //    numOfTry++;
+                //}
+                //else
+                //{
+                //    IsWaitingForResponse = false;
+                //    timer1.Enabled = false;
+                //    MessageBox.Show(MyStrings.String_Failed_to_dump_memory);
+                //}
+            }
+        }
+
+        private void timerReceive_Tick(object sender, EventArgs e)
         {
             if (commObj == null) return;
             Receive();
@@ -353,8 +386,8 @@ namespace GuidanceStsbilityCommsDownLoad
             //System.Diagnostics.Debug.Assert((data != null) && (data.Length == len - 8));
             if (address.ToolAddress == EnumToolAddress.All)
             {
-                    NearBitTool.ProcessDataPacket(dataPacket);
-                UpdateDisplayNearBitData();
+                GSCTool.ProcessDataPacket(dataPacket);// 上面运行完下载列表请求后确实直接来着了，但是在这里一个if都没进
+                UpdateDisplayNearBitData();// 上面没进就导致没有数据需要更新，下面也没有运行
             }
         }
         // broadcast message received, notify any object waiting for response
@@ -468,13 +501,13 @@ namespace GuidanceStsbilityCommsDownLoad
             if (DataPacketDownloadlist.VerifyDataPacket(sentDataPacket, receivedDataPacket) == false) return;
 
             IsWaitingForResponse = false;
-            timerReceive.Enabled = false;
+            timerDump1.Enabled = false;
 
             int param = receivedDataPacket.Command.Header.Parameter;
 
             // special handling for get RTC time
             if (receivedDataPacket.Command.Header.CmdObject == CommandHeader.EnumCmdObject.RTClock && param == (int)RTClockObject.RTClockParameter.GetRTClock)
-            {
+            {// 方位伽马第一次运行到这里CmdObject是M30Data
                 byte[] data = receivedDataPacket.Command.Data;
                 DateTime dt = RTClockObject.BytesToDateTime(data);
                 MessageBox.Show(string.Format("{0:MM/dd/yyyy HH:mm:ss}", dt));
@@ -503,27 +536,27 @@ namespace GuidanceStsbilityCommsDownLoad
                 //        else MessageBox.Show(MyStrings.String_Failed_to_dump_memory);
                 //    }
                 //    break;
-                case (int)(ToolSpecificObject.EnumMemoryParameter.GetMemoryInfo):
+                case (int)(ToolSpecificObject.EnumMemoryParameter.GetMemoryInfo):// 第一次运行到这里
                     responseMemoryInfo(receivedDataPacket);
 
                     startEntryItemNum = 0;
                     if (entryItemList != null) entryItemList.Clear();
                     requestGetEntryTableItems();
                     break;
-                //case (int)(BWToolSpecificObject.BWEnumMemoryParameter.GetEntryTableItems):
-                //    if (responseGetEntryTableItems(receivedDataPacket) == maxNumOfEntryItems)
-                //    {
-                //        startEntryItemNum += maxNumOfEntryItems;
-                //        requestGetEntryTableItems();
-                //    }
-                //    else
-                //    {
-                //        refreshDisplay();
-                //        System.Diagnostics.Debug.WriteLine("Entry table has " + entryItemList.Count + " items!");
-                //        buttonDump.Enabled = true;
-                //        buttonClear.Enabled = true;
-                //    }
-                //    break;
+                case (int)(ToolSpecificObject.EnumMemoryParameter.GetEntryTableItems):// 第二次运行到这里；第三次也是
+                    if (responseGetEntryTableItems(receivedDataPacket) == maxNumOfEntryItems)
+                    {// 走这里
+                        startEntryItemNum += maxNumOfEntryItems;
+                        requestGetEntryTableItems();
+                    }
+                    else
+                    {// 最后会走这里，我理解为10个读一次直到读到最后一个
+                        refreshDisplay();
+                        System.Diagnostics.Debug.WriteLine("Entry table has " + entryItemList.Count + " items!");
+                        buttonDump.Enabled = true;
+                        buttonClear.Enabled = true;
+                    }
+                    break;
                 //case (int)(BWToolSpecificObject.BWEnumMemoryParameter.GetFatTableItems):
                 //    if (responseGetFatTableItems(receivedDataPacket) != 1)
                 //    {
@@ -583,6 +616,122 @@ namespace GuidanceStsbilityCommsDownLoad
             }
         }
 
+        private int responseGetEntryTableItems(DataPacketDownloadlist receivedDataPacket)
+        {
+            if (receivedDataPacket == null ||
+                receivedDataPacket.Command == null ||
+                receivedDataPacket.Command.Data == null ||
+                receivedDataPacket.Command.Data.Length < 3) return -1;
+
+            Byte[] data = receivedDataPacket.Command.Data;
+
+            byte[] temp = new byte[2];
+            temp[0] = data[2];
+            int numOfEntryItemReturned = Converter.BytesToUShort(temp, 0);
+            if (numOfEntryItemReturned == 0) return 0;
+
+            System.Diagnostics.Debug.Assert((data.Length - 3) % 16 == 0);
+            numOfEntryItemReturned = (data.Length - 3) / 16;
+
+            int validEntryItemCount = 0;
+            int pos = 3;
+            for (int i = 0; i < numOfEntryItemReturned; i++)
+            {
+                if (pos + 16 > data.Length) break;
+
+                // check CRC error校验需要修改
+                Crc16 crc16 = new Crc16();
+                byte[] temp2 = new byte[6];
+                // start CRC
+                Array.Copy(data, pos, temp2, 0, 6);
+                byte[] checkSumCalc = crc16.ComputeChecksumBytes(temp2);
+                if ((checkSumCalc[0] != data[pos + 6]) || (checkSumCalc[1] != data[pos + 7]))
+                {
+                    pos += 16;
+                    continue;
+                }
+                // end CRC
+                Array.Copy(data, pos + 8, temp2, 0, 6);
+                checkSumCalc = crc16.ComputeChecksumBytes(temp2);
+                if ((checkSumCalc[0] != data[pos + 14]) || (checkSumCalc[1] != data[pos + 15]))
+                {
+                    pos += 16;
+                    continue;
+                }
+
+                // check if the last 8 bytes is 0xFF's
+                //bool isLastItem = true;
+                //for (int j = pos + 8; j < pos + 16; j++)
+                //{
+                //    if (data[j] != 0xFF)
+                //    {
+                //        isLastItem = false;
+                //        break;
+                //    }
+                //}
+                //if (isLastItem == true)
+                //{
+                //    break;
+                //}
+
+                EntryItem entryItem = new EntryItem();
+                entryItem.StartTime = Converter.BytesToUInt(data, pos);
+                pos += 4;
+                entryItem.FatItemNum = Converter.BytesToUShort(data, pos);
+                pos += 2;
+                entryItem.CrcStart = Converter.BytesToUShort(data, pos);
+                pos += 2;
+                entryItem.EndTime = Converter.BytesToUInt(data, pos);
+                pos += 4;
+                entryItem.NumOfPages = Converter.BytesToUShort(data, pos);
+                pos += 2;
+                entryItem.CrcEnd = Converter.BytesToUShort(data, pos);
+                pos += 2;
+
+                // check EndTime for validality
+                DateTime dateTime = new DateTime(1970, 1, 1);
+                dateTime = dateTime.AddSeconds(entryItem.EndTime);
+                if (dateTime.Year <= 2050)
+                {
+                    if (entryItemList == null) entryItemList = new List<EntryItem>();
+                    entryItemList.Add(entryItem);
+                    validEntryItemCount++;
+                }
+                //else
+                //{
+                //    int stop = 2;
+                //}
+            }
+
+            return numOfEntryItemReturned;
+            //return validEntryItemCount;
+        }
+        private void refreshDisplay()
+        {
+            downloadListItems.Clear();
+
+            if (entryItemList == null || entryItemList.Count == 0) return;
+
+            ListViewItem item;
+            int entryNum = 0;
+            foreach (EntryItem entryItem in entryItemList)
+            {
+                entryNum++;
+                item = new ListViewItem(entryNum.ToString());
+                downloadListItems.Add(item);
+
+                item.SubItems.Add(Converter.SecondsToLongTime(entryItem.StartTime, false, true));
+                item.SubItems.Add(Converter.SecondsToLongTime(entryItem.EndTime, false, true));
+                item.SubItems.Add((entryItem.EndTime - entryItem.StartTime).ToString());
+                item.SubItems.Add((entryItem.NumOfPages * pageSize).ToString());
+
+                //String line = String.Format("{0} {1} {2} {3}", entryNum, entryItem.StartTime, entryItem.EndTime, entryItem.NumOfPages * 256);
+                //System.Diagnostics.Debug.WriteLine(line);
+                //BWUtility.DebugLog(line);
+                //String debugMsg = "Info: BWMemoryDumpDlg::refreshDisplay(): " + line;
+                //BWUtility.DebugLog(debugMsg);
+            }
+        }
     }
 
 

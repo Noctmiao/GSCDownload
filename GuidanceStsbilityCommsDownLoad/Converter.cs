@@ -295,6 +295,17 @@ namespace GuidanceStsbilityCommsDownLoad
             uint r = BitConverter.ToUInt32(data, start);
             return r;
         }
+        public static ushort BytesToUShort(byte[] data, int start)
+        {
+            if (data == null || data.Length < 2) return ushort.MinValue;
+            if (start < 0 || data.Length - start < 2) return ushort.MinValue;
+
+            //int pos = start;
+            //int r = data[pos] + data[pos + 1] * 256;
+
+            ushort r = BitConverter.ToUInt16(data, start);
+            return r;
+        }
         #endregion
     }
 }

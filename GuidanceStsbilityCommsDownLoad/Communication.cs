@@ -169,7 +169,7 @@ namespace GuidanceStsbilityCommsDownLoad
                 dataFrame.DstAddr = dstAddr;
                 //ToolBoardAddress toolBoardAddress = new ToolBoardAddress(dstAddr);
                 //if (CurrentToolAddress == BWEnumToolAddress.Surface || toolBoardAddress.ToolAddress == CurrentToolAddress)
-                //{
+                //{// gamma 会选择这个,这里由于没有写出来姑且注掉了这一段，实际是存在判断的
                 //    dataFrame.DstAddr = dstAddr;
                 //}
                 //else
