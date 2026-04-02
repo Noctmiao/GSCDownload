@@ -1,4 +1,5 @@
 ﻿using AntdUI;
+using BWNSLWDTools;
 using GuidanceStsbilityComms;
 using LsySkin;
 using MultiPort;
@@ -8,19 +9,41 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static GuidanceStsbilityCommsDownLoad.Communication;
 using static System.Resources.ResXFileRef;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace GuidanceStsbilityCommsDownLoad
 {
     public partial class GSCDownload : AntdUI.Window
     {
+        private List<int> entryItemSelectedIndexList;   // indices of entry items selected to dump
+        private int curEntryItemPos;                    // between [0x3, entryItemSelectedIndexList.Count - 1]
+        // for progress bar
+        private int totalSizeToDump;
+        private int sizeDumped;
+        private DateTime dumpStartTime;
+        // output
+        // foreach entryItem to dump
+        private uint startAddress;      // start address for each entry item
+        private uint dumpSize;          // size of current dump = endAddress - startAddress
+        private int curDataPos;         // points to within dumpedData
+        private byte[] dumpedData;      // buffer of size = dumpSize
+        // for all selected entryItems to dump
+        private List<MemoryDataOneRun> memoryDataRunList;
+        private List<Dataset> timeDatasetList;
+
+        // 32 raw resistivity datasets
+        private List<Dataset> timeRawDatasetList;
 
         public bool IsWaitingForResponse;
         private DataPacketDownloadlist sentDataPacket;
@@ -28,7 +51,7 @@ namespace GuidanceStsbilityCommsDownLoad
         private EnumCommunication communication;
         private CommunicationObject commObj;
 
-        private AntList<DownloadListItem> downloadListItems;
+        //private AntList<DownloadListItem> downloadListItems;
 
         //datapacket length every time
         public int maxLength;
@@ -37,21 +60,30 @@ namespace GuidanceStsbilityCommsDownLoad
         // memory structure
         private const int maxNumOfEntryItems = 10;
         private ushort startEntryItemNum = 0;
+        private ushort startFatItemNum = 0;
         private List<EntryItem> entryItemList;
         private List<FatItem> fatItemList;
+
+        private const int maxDumpSize = 256;    // max num of bytes to dump each time
+        private const int pageSize = 256;       // 256 bytes per page in memory
 
         // memory info
         private uint memorySize;
         private uint memoryUsed;
 
+        // retry
+        private int timeOut = 1000;      // 1000 ms
+        private int numOfTry;
+
         // tools
         public static BaseTool GSCTool;
 
 
-        Timer timerReceive;// 原lwdtools主界面
-        Timer timerDump1;
-        Timer timerDump2;
+        System.Windows.Forms.Timer timerReceive;// 原lwdtools主界面
+        System.Windows.Forms.Timer timerDump1;
+        System.Windows.Forms.Timer timerDump2;
 
+        private static bool isDiagnostic = false;
 
         public GSCDownload()
         {
@@ -64,21 +96,21 @@ namespace GuidanceStsbilityCommsDownLoad
 
             button_dump.Enabled = false;
             button_clear.Enabled = false;
-            timerReceive = new Timer();
+            timerReceive = new System.Windows.Forms.Timer();
             timerReceive.Interval = 100;
             timerReceive.Tick += new System.EventHandler(timerReceive_Tick);
 
-            timerDump1 = new Timer();
+            timerDump1 = new System.Windows.Forms.Timer();
             timerDump1.Interval = 100;
             timerDump1.Enabled = false;
             timerDump1.Tick += new System.EventHandler(timer1_Tick);
 
-            timerDump2 = new Timer();
+            timerDump2 = new System.Windows.Forms.Timer();
             timerDump2.Interval = 100;
             timerDump2.Enabled = false;
 
             // table init
-            Init_listView_ResistivityTool_downloadlist();
+            //Init_listView_ResistivityTool_downloadlist();
             // antdui init
             Config.IsLight = true;
             BackColor = Color.White;
@@ -86,7 +118,7 @@ namespace GuidanceStsbilityCommsDownLoad
 
         }
 
-        private void Init_listView_ResistivityTool_downloadlist()
+        /*private void Init_listView_ResistivityTool_downloadlist()
         {
             // columns
             listView_ResistivityTool_downloadlist.Columns = new ColumnCollection()
@@ -115,7 +147,7 @@ namespace GuidanceStsbilityCommsDownLoad
             // bind date
             downloadListItems = new AntList<DownloadListItem>();
             listView_ResistivityTool_downloadlist.Binding(downloadListItems);
-        }
+        }*/
         private void button_BlueCAN_Click(object sender, EventArgs e)
         {
             using (new CursorWait())
@@ -174,7 +206,7 @@ namespace GuidanceStsbilityCommsDownLoad
         }
         private void memorySelectionChanged()
         {
-            downloadListItems.Clear();
+            listViewRuns.Items.Clear();
 
             startEntryItemNum = 0;
             entryItemList.Clear();
@@ -184,14 +216,15 @@ namespace GuidanceStsbilityCommsDownLoad
             button_dump.Enabled = false;
             button_clear.Enabled = false;
         }
+        byte SendDst = 0x13;
         private void requestMemoryInfo()
         {
-            byte dst = ToolBoardAddress.GetToolBoardAddress(0, 0);// 接收的src
+            //byte dst = ToolBoardAddress.GetToolBoardAddress(0, 0);// 接收的src
+            byte dst = SendDst;// 接收的src
             int param = (int)(ToolSpecificObject.EnumMemoryParameter.GetMemoryInfo);
             byte[] data = null;
 
-            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.ToolSpecific;
-            //if (whichMemory == 2 || whichMemory == 6 || whichMemory == 0) obj = BWCommandHeader.BWEnumCmdObject.NearBitMemory;// 修改,obj会改变第5位 // 2.修改源地址：国家项目源地址
+            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.NearBitMemory;
             sentDataPacket = DataPacketDownloadlist.GenerateDataPacket(dst, obj, param, data);
 
             //byte[] datasend = new byte[] { 0x13, 0x0e, 0x08, 0x00, 0x09, 0x10, 0x00, 0x00 };
@@ -218,7 +251,7 @@ namespace GuidanceStsbilityCommsDownLoad
         }
         private void requestGetEntryTableItems()
         {
-            byte dst = ToolBoardAddress.GetToolBoardAddress(0, 0);
+            byte dst = SendDst;// 接收的src
             int param = (int)(ToolSpecificObject.EnumMemoryParameter.GetEntryTableItems);
 
             byte[] data = new byte[3];
@@ -227,12 +260,52 @@ namespace GuidanceStsbilityCommsDownLoad
             temp = Converter.UShortToBytes(maxNumOfEntryItems);
             data[2] = temp[0];
 
-            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.ToolSpecific;
-            //if (whichMemory == 2 || whichMemory == 6 || whichMemory == 0) obj = BWCommandHeader.BWEnumCmdObject.NearBitMemory;// 2.修改源地址：国家项目源地址（获取列表地址）
+            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.NearBitMemory;
             sentDataPacket = DataPacketDownloadlist.GenerateDataPacket(dst, obj, param, data);
 
             IsWaitingForResponse = true;
             Send(sentDataPacket.ToBytes());
+        }// 请求下载列表的数据
+        private void requestGetFatTableItems()
+        {
+            byte dst = SendDst;// 接收的src
+            int param = (int)(ToolSpecificObject.EnumMemoryParameter.GetFatTableItems);
+
+            byte[] data = new byte[3];
+            byte[] temp = Converter.UShortToBytes(startFatItemNum);
+            Array.Copy(temp, 0, data, 0, 2);
+            temp = Converter.UShortToBytes(1);
+            data[2] = temp[0];
+
+            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.NearBitMemory;
+            //if (whichMemory == 2 || whichMemory == 6 || whichMemory == 0) obj = BWCommandHeader.BWEnumCmdObject.NearBitMemory;// 2.修改源地址：国家项目源地址
+            sentDataPacket = DataPacketDownloadlist.GenerateDataPacket(dst, obj, param, data);
+
+            IsWaitingForResponse = true;
+            Send(sentDataPacket.ToBytes());
+        }// 在下载具体数据前的请求
+        private void requestToolData(uint startAddr, ushort length)// 下载请求
+        {
+            byte dst = SendDst;
+            int param = (int)(ToolSpecificObject.EnumMemoryParameter.GetToolData);
+
+            byte[] data = new byte[6];
+            byte[] temp = null;
+            temp = Converter.UIntToBytes(startAddr);
+            Array.Copy(temp, 0, data, 0, 4);
+            temp = Converter.UShortToBytes(length);
+            Array.Copy(temp, 0, data, 4, 2);
+
+            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.ToolSpecific;
+            //if (whichMemory == 2 || whichMemory == 6 || whichMemory == 0) obj = BWCommandHeader.BWEnumCmdObject.NearBitMemory;// 2.修改源地址：国家项目源地址
+            sentDataPacket = DataPacketDownloadlist.GenerateDataPacket(dst, obj, param, data);
+
+            IsWaitingForResponse = true;
+            Send(sentDataPacket.ToBytes());
+
+            timerDump1.Interval = timeOut;
+            numOfTry = 1;
+            timerDump1.Enabled = true;
         }
 
         // send and receive
@@ -384,12 +457,65 @@ namespace GuidanceStsbilityCommsDownLoad
             BroadcastMessageReceived(dataPacket); // 刷新下载列表
 
             //System.Diagnostics.Debug.Assert((data != null) && (data.Length == len - 8));
-            if (address.ToolAddress == EnumToolAddress.All)
+            /*if (address.ToolAddress == EnumToolAddress.All)
             {
                 GSCTool.ProcessDataPacket(dataPacket);// 上面运行完下载列表请求后确实直接来着了，但是在这里一个if都没进
                 UpdateDisplayNearBitData();// 上面没进就导致没有数据需要更新，下面也没有运行
+            }*/
+        }
+        /// <summary>
+        /// process and create a single run dumped data: memData1r, add to memoryDataList.
+        /// append new memData1r.timeDatasetList to timeDatasetList
+        /// </summary>
+        private void processDumpedDataOneRun()
+        {
+            MemoryDataOneRun memData1r = new MemoryDataOneRun();
+            int curEntryItemNum = entryItemSelectedIndexList[curEntryItemPos];
+            memData1r.RunNumber = curEntryItemNum + 1;
+            memData1r.StartTime = entryItemList[curEntryItemNum].StartTime;
+            memData1r.EndTime = entryItemList[curEntryItemNum].EndTime;
+
+            saveDumpedDataOneRun(memData1r, dumpedData);
+
+            memData1r.TimeDatasetList = ProcessMemoryData.ProcessDumpedData(dumpedData);
+            memData1r.BoardInfoList = ProcessMemoryData.BoardInfoList;
+            memData1r.BoardParamList = ProcessMemoryData.BoardParamList;
+
+            if (memoryDataRunList == null) memoryDataRunList = new List<MemoryDataOneRun>();
+            memoryDataRunList.Add(memData1r);
+
+            if (timeDatasetList == null) timeDatasetList = new List<Dataset>();
+            DatasetUtility.Merge(timeDatasetList, memData1r.TimeDatasetList, DataMergeOption.append);
+        }
+        // raw memory data
+        private void saveDumpedDataOneRun(MemoryDataOneRun mem1r, byte[] dumpedData1r)
+        {
+            String memoryDir = "GSC";
+            String myProjectDataDirectory = Path.Combine(Environment.CurrentDirectory + @"\Logs", Application.ProductName + " " + Application.ProductVersion);
+            if (!File.Exists(myProjectDataDirectory)) Directory.CreateDirectory(myProjectDataDirectory);
+            String myFileFullName = Path.Combine(myProjectDataDirectory, memoryDir);
+            memoryDir = myFileFullName;
+            Directory.CreateDirectory(memoryDir);
+
+            String startTime = Converter.SecondsToLongTime2(mem1r.StartTime);
+            String fileName = Path.Combine(memoryDir, "Run " + mem1r.RunNumber.ToString() + " " + startTime) + ".dump";
+
+            FileStream fs = new FileStream(fileName, FileMode.Create);
+            try
+            {
+                BinaryWriter bw = new BinaryWriter(fs);
+                bw.Write(dumpedData);
+                bw.Close();
+                fs.Close();
+            }
+            catch (Exception ex)
+            {
+                String debugMsg = "Info: BWMemoryDumpDlg::saveDumpedDataOneRun(): " + "Fail to save dumped data!" + " " + ex.Message;
+                Utility.DebugLog(debugMsg);
+                if (fs != null) fs.Close();
             }
         }
+
         // broadcast message received, notify any object waiting for response
         public void BroadcastMessageReceived(DataPacketDownloadlist dataPacket)
         {// 通知等待响应的对象，刷新下载列表
@@ -553,64 +679,64 @@ namespace GuidanceStsbilityCommsDownLoad
                     {// 最后会走这里，我理解为10个读一次直到读到最后一个
                         refreshDisplay();
                         System.Diagnostics.Debug.WriteLine("Entry table has " + entryItemList.Count + " items!");
-                        buttonDump.Enabled = true;
-                        buttonClear.Enabled = true;
+                        button_dump.Enabled = true;
+                        button_clear.Enabled = true;
                     }
                     break;
-                //case (int)(BWToolSpecificObject.BWEnumMemoryParameter.GetFatTableItems):
-                //    if (responseGetFatTableItems(receivedDataPacket) != 1)
-                //    {
-                //        ;
-                //    }
-                //    else
-                //    {
-                //        dumpSize = (uint)entryItemList[entryItemSelectedIndexList[curEntryItemPos]].NumOfPages * pageSize;
-                //        if (isDiagnostic == true) dumpSize = 2 * pageSize;      // all board info size = 333 bytes (2+4+31) * 9
-                //        curDataPos = 0;
-                //        dumpedData = new byte[dumpSize];
+                case (int)(ToolSpecificObject.EnumMemoryParameter.GetFatTableItems):// 下载数据请求发送后接收到的回数
+                    if (responseGetFatTableItems(receivedDataPacket) != 1)
+                    {
+                        ;
+                    }
+                    else
+                    {
+                        dumpSize = (uint)entryItemList[entryItemSelectedIndexList[curEntryItemPos]].NumOfPages * pageSize;
+                        if (isDiagnostic == true) dumpSize = 2 * pageSize;      // all board info size = 333 bytes (2+4+31) * 9
+                        curDataPos = 0;
+                        dumpedData = new byte[dumpSize];
 
-                //        // dump memory data from start to end memory addresses
-                //        ushort requestDumpSize = maxDumpSize;
-                //        if (dumpSize < maxDumpSize) requestDumpSize = (ushort)dumpSize;
-                //        requestToolData(startAddress, requestDumpSize);
-                //    }
-                //    break;
-                //case (int)(BWToolSpecificObject.BWEnumMemoryParameter.GetToolData):
-                //    int actualDumpedSize = responseToolData(receivedDataPacket);
-                //    curDataPos += actualDumpedSize;
-                //    if (curDataPos >= dumpSize)
-                //    {   // reaches the end of this entry item, process dumped memory data and dump next entry item;
-                //        System.Diagnostics.Debug.WriteLine("Finish dump entry: " + entryItemSelectedIndexList[curEntryItemPos]);
-                //        if (isDiagnostic == false) processDumpedDataOneRun();
-                //        else processDiagnosticDataOneRun();
+                        // dump memory data from start to end memory addresses
+                        ushort requestDumpSize = maxDumpSize;
+                        if (dumpSize < maxDumpSize) requestDumpSize = (ushort)dumpSize;
+                        requestToolData(startAddress, requestDumpSize);
+                    }
+                    break;
+                case (int)(ToolSpecificObject.EnumMemoryParameter.GetToolData):
+                    int actualDumpedSize = responseToolData(receivedDataPacket);
+                    curDataPos += actualDumpedSize;
+                    if (curDataPos >= dumpSize)
+                    {   // reaches the end of this entry item, process dumped memory data and dump next entry item;
+                        System.Diagnostics.Debug.WriteLine("Finish dump entry: " + entryItemSelectedIndexList[curEntryItemPos]);
+                        if (isDiagnostic == false) processDumpedDataOneRun();
+                        //else processDiagnosticDataOneRun();
 
-                //        //// set prograss bar
-                //        //sizeDumped += calculateTotalMemorySizeToDoump(entryItemSelectedIndexList[curEntryItemPos]);
-                //        //this.progressBar1.Value = sizeDumped * 100 / totalSizeToDump;
+                        //// set prograss bar
+                        //sizeDumped += calculateTotalMemorySizeToDoump(entryItemSelectedIndexList[curEntryItemPos]);
+                        //this.progressBar1.Value = sizeDumped * 100 / totalSizeToDump;
 
-                //        curEntryItemPos++;
-                //        if (curEntryItemPos >= entryItemSelectedIndexList.Count)
-                //        {   // reaches the end of this dump
-                //            updateProgressBar(totalSizeToDump);
-                //            //IsWaitingForResponse = false;
-                //            MessageBox.Show(MyStrings.String_Memory_dump_finished_successfully);
-                //            return;
-                //        }
-                //        else
-                //        {   // dump the next entry item
-                //            dumpMemory(entryItemSelectedIndexList[curEntryItemPos]);
-                //        }
-                //    }
-                //    else
-                //    {
-                //        //System.Diagnostics.Debug.WriteLine("curDataPos: " + curDataPos + ", total size: " + dumpSize);
-                //        requestToolData((uint)(startAddress + curDataPos), maxDumpSize);
-                //    }
+                        curEntryItemPos++;
+                        if (curEntryItemPos >= entryItemSelectedIndexList.Count)
+                        {   // reaches the end of this dump
+                            updateProgressBar(totalSizeToDump);
+                            //IsWaitingForResponse = false;
+                            MessageBox.Show(MyStrings.String_Memory_dump_finished_successfully);// marker 可以替换
+                            return;
+                        }
+                        else
+                        {   // dump the next entry item
+                            dumpMemory(entryItemSelectedIndexList[curEntryItemPos]);
+                        }
+                    }
+                    else
+                    {
+                        //System.Diagnostics.Debug.WriteLine("curDataPos: " + curDataPos + ", total size: " + dumpSize);
+                        requestToolData((uint)(startAddress + curDataPos), maxDumpSize);
+                    }
 
-                //    // set prograss bar
-                //    sizeDumped += actualDumpedSize;
-                //    updateProgressBar(sizeDumped);
-                //    break;
+                    // set prograss bar
+                    sizeDumped += actualDumpedSize;
+                    updateProgressBar(sizeDumped);
+                    break;
                 default:
                     break;
             }
@@ -706,9 +832,52 @@ namespace GuidanceStsbilityCommsDownLoad
             return numOfEntryItemReturned;
             //return validEntryItemCount;
         }
+        private int responseGetFatTableItems(DataPacketDownloadlist receivedDataPacket)
+        {
+            if (receivedDataPacket == null ||
+                receivedDataPacket.Command == null ||
+                receivedDataPacket.Command.Data == null ||
+                receivedDataPacket.Command.Data.Length < 3) return -1;
+
+            byte[] data = receivedDataPacket.Command.Data;
+
+            byte[] temp = new byte[2];
+            temp[0] = data[2];
+            int numOfFatItemReturned = Converter.BytesToUShort(temp, 0);
+            if (numOfFatItemReturned == 0) return 0;
+
+            System.Diagnostics.Debug.Assert((data.Length - 3) % 8 == 0);
+            numOfFatItemReturned = (data.Length - 3) / 8;   // should be = 1
+
+            int pos = 3;
+            if (pos + 8 > data.Length) return 0;
+            FatItem fatItem = new FatItem();
+            fatItem.StartTime = Converter.BytesToUInt(data, pos);
+            pos += 4;
+            fatItem.Address = Converter.BytesToUInt(data, pos);
+
+            startAddress = fatItem.Address;
+
+            return numOfFatItemReturned;
+        }
+        private int responseToolData(DataPacketDownloadlist receivedDataPacket)//请求数据回应
+        {
+            if (receivedDataPacket == null ||
+                receivedDataPacket.Command == null ||
+                receivedDataPacket.Command.Data == null ||
+                receivedDataPacket.Command.Data.Length == 0) return -1;
+
+            byte[] data = receivedDataPacket.Command.Data;
+
+            // start address (4 bytes), length (2 bytes), see protocol
+            Array.Copy(data, 6, dumpedData, curDataPos, data.Length - 6);
+            //curDataPos += data.Length - 6;
+
+            return data.Length - 6;
+        }
         private void refreshDisplay()
         {
-            downloadListItems.Clear();
+            listViewRuns.Items.Clear();
 
             if (entryItemList == null || entryItemList.Count == 0) return;
 
@@ -718,7 +887,7 @@ namespace GuidanceStsbilityCommsDownLoad
             {
                 entryNum++;
                 item = new ListViewItem(entryNum.ToString());
-                downloadListItems.Add(item);
+                listViewRuns.Items.Add(item);
 
                 item.SubItems.Add(Converter.SecondsToLongTime(entryItem.StartTime, false, true));
                 item.SubItems.Add(Converter.SecondsToLongTime(entryItem.EndTime, false, true));
@@ -731,6 +900,105 @@ namespace GuidanceStsbilityCommsDownLoad
                 //String debugMsg = "Info: BWMemoryDumpDlg::refreshDisplay(): " + line;
                 //BWUtility.DebugLog(debugMsg);
             }
+        }
+        private void updateProgressBar(int sizeDumped)
+        {
+            // set prograss bar
+            this.progressBar1.Value = sizeDumped * 100 / totalSizeToDump;// marker,0-1
+
+            TimeSpan ts = DateTime.Now - dumpStartTime;
+            double speed = (double)sizeDumped / ts.TotalSeconds;                 // bytes/second
+            int remainingTime = (int)((totalSizeToDump - sizeDumped) / speed);   // seconds
+            String msg = String.Format("速度{0}byte/s,剩余{1}min{2}s", (int)speed * 8, remainingTime / 60, remainingTime % 60);
+            progressBar1.Text = msg;
+        }
+
+        private void button_dump_Click(object sender, EventArgs e)
+        {
+            if (entryItemList == null || entryItemList.Count == 0) return;
+
+            //// diagnostic
+            //String msg = "buttonDump_Click";
+            //System.Diagnostics.Debug.WriteLine(msg);
+
+            if (listViewRuns.SelectedIndices == null || listViewRuns.SelectedIndices.Count == 0)
+            {
+                MessageBox.Show(MyStrings.String_Please_select_a_run_number);// marker
+                return;
+            }
+
+            //// diagnostic
+            //System.Diagnostics.Debug.WriteLine("entryItemList.Count = " + entryItemList.Count);
+            //System.Diagnostics.Debug.WriteLine("selected entries:");
+
+            entryItemSelectedIndexList = new List<int>();
+            for (int i = 0; i < listViewRuns.SelectedIndices.Count; i++)
+            {
+                int index = listViewRuns.SelectedIndices[i];
+                if (index >= 0 && index < entryItemList.Count)
+                {
+                    entryItemSelectedIndexList.Add(index);
+                }
+            }
+
+            isDiagnostic = false;
+
+            totalSizeToDump = calculateTotalMemorySizeToDoump();
+            sizeDumped = 0;
+            dumpStartTime = DateTime.Now;
+
+            clear();
+            progressBar1.Value = 0;// 0-1
+            curEntryItemPos = 0;
+            dumpMemory(entryItemSelectedIndexList[curEntryItemPos]);
+        }
+        private void dumpMemory(int entryItemNum)
+        {
+            // diagnostic
+            System.Diagnostics.Debug.WriteLine("Dump memory, entry #: " + entryItemNum);
+
+            startFatItemNum = entryItemList[entryItemNum].FatItemNum;
+            requestGetFatTableItems();
+        }
+        /// <summary>
+        /// clear memoryDataList and timeDatasetList
+        /// </summary>
+        private void clear()
+        {
+            if (memoryDataRunList == null) memoryDataRunList = new List<MemoryDataOneRun>();
+            memoryDataRunList.Clear();
+
+            if (timeDatasetList == null) timeDatasetList = new List<Dataset>();
+            timeDatasetList.Clear();
+
+            if (timeRawDatasetList == null) timeRawDatasetList = new List<Dataset>();
+            timeRawDatasetList.Clear();
+        }
+        /// <summary>
+        /// calculates the total size of the selected memory data to dump.
+        /// used for progress bar
+        /// </summary>
+        /// <returns></returns>
+        private int calculateTotalMemorySizeToDoump()
+        {
+            if (entryItemList == null || entryItemList.Count == 0) return 0;
+            //if (fatItemList == null || fatItemList.Count == 0) return 0;
+
+            int totalSize = 0;
+            foreach (int k in entryItemSelectedIndexList)
+            {
+                totalSize += calculateTotalMemorySizeToDoump(k);
+            }
+
+            return totalSize;
+        }
+        private int calculateTotalMemorySizeToDoump(int k)
+        {
+            if (entryItemList == null || k >= entryItemList.Count) return 0;
+
+            int size = entryItemList[k].NumOfPages * pageSize;
+
+            return size;
         }
     }
 
@@ -757,6 +1025,478 @@ namespace GuidanceStsbilityCommsDownLoad
     {
         public uint StartTime;
         public uint Address;
+    }
+    public struct MemoryDataPacket
+    {
+        // 1  2  3  4  5  6  7  8  9  10 11 12
+        //       time        d  s  len   o  pr data   crc
+        // 5A 5A XX XX XX XX XX XX XX XX XX XX ...... XX XX
+        public byte[] DataBytes;
+
+        public bool IsValid;
+        public String Time;
+        public EnumToolAddress Type;
+        public EnumBoardAddress SubType;
+        public double[] RawData;
+        public double[] CalcData;
+        public String ErrMsg;
+        public MemoryDataPacket(byte[] data, int start, int length)
+        {
+            if (data == null || data.Length == 0 ||
+                start < 0 || length <= 0 || start + length >= data.Length) DataBytes = null;
+            else
+            {
+                DataBytes = new byte[length];
+                Array.Copy(data, start, DataBytes, 0, length);
+            }
+
+            BytesToData(DataBytes, out IsValid, out Time, out Type, out SubType, out RawData, out CalcData, out ErrMsg);
+        }
+        private static void BytesToData(byte[] dataBytes, out bool isValid, out String time, out EnumToolAddress type,
+            out EnumBoardAddress subType, out double[] rawData, out double[] calcData, out String errMsg)
+        {
+            isValid = false;
+            time = String.Empty;
+            type = EnumToolAddress.All;
+            subType = EnumBoardAddress.AllBoards;
+            rawData = null;
+            calcData = null;
+            errMsg = String.Empty;
+
+            if (dataBytes == null || dataBytes.Length == 0) return;
+            if (dataBytes.Length < 6 + 8) return;
+
+            //       1  2  3  4  5  6  7  8  9  10
+            // 5A 5A XX XX XX XX XX XX XX XX XX XX data XX XX
+            //       time        d  s  len   o  pr      crc
+            // check src tool address
+            byte toolAddr = dataBytes[7];   // 0x5A 0x5A + 4 byte time + 1 byte dst addr (memory 1 or 2)
+            byte len = dataBytes[8];        // 0x34, 0x48, 0x0C
+            byte obj = dataBytes[10];       // 0x87
+            int dataLength = 0;
+
+            if (toolAddr == ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.BWNB, EnumBoardAddress.NBBatteryControl))
+            {// marker
+                //if (len != (BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 8) || obj != 0x87)
+                //{
+                //    isValid = false;
+                //    errMsg = "Length doesn't match! (NBBC, 0x2B)";
+                //    return;
+                //}
+                //dataLength = BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 12;
+                //type = BWEnumToolAddress.BWNB;
+                //subType = BWEnumBoardAddress.NBBatteryControl;
+            }
+
+            if (dataLength > dataBytes.Length - 2)
+            {   // reaches end of data
+                isValid = false;
+                errMsg = "Data length incorrect! (Mwd 58, Res 78, Gam 18)";
+                return;
+            }
+
+            int seconds = Converter.BytesToInt(dataBytes, 2);
+            time = Converter.SecondsToLongTime(seconds, false, true);
+            byte[] dataPacketBytes = new byte[dataLength - 4];
+            Array.Copy(dataBytes, 6, dataPacketBytes, 0, dataLength - 4);
+            DataPacketGSC dataPacket = new DataPacketGSC(dataPacketBytes);// marker
+
+            if (dataPacket.isValidData() == true)
+            {
+                isValid = true;
+
+                if (type == EnumToolAddress.BWNB)
+                {// marker
+                    //rawData = BWLWDToolsNew.NearBitTool.ProcessMemoryData(subType, seconds, dataPacket.Command.Data, dataPacket.Command.Header.Return);
+                    //if (rawData != null && rawData.Length > 0)
+                    //{
+                    //    calcData = new double[rawData.Length];
+                    //    Array.Copy(rawData, calcData, rawData.Length);
+                    //}
+                }
+            }
+        }
+    }
+    public static class ProcessMemoryData
+    {
+        public static List<MemoryDataPacket> DataPacketList;
+        public static List<BoardInfo> BoardInfoList;
+        public static List<BoardParam> BoardParamList;
+        /// <summary>
+        /// The input should be dumped from a single run memory data.
+        /// It will create and append the memory data in a datasetList,
+        /// which includes 8 resistivity, 7 mwd and 1 gamma curves.
+        /// 
+        /// ===============================================================
+        ///                 DataLength  ActualLength    #ofRawData  #ofData
+        /// Mwd             56          44              11          7
+        /// Res             76          64              32          8
+        /// Gamma           16          4               1           1
+        /// NearBit
+        ///     Status      47          35              16          16
+        ///     Res         38          26              11          3
+        ///     DirGA       32          20              10          3
+        /// NearBit RX      100         88              22          22
+        /// Pwd             36          24              6           6
+        /// DirRes          122         110             45
+        /// Nuclear
+        ///     Neutron     140         128             32
+        ///     Sonic       44          32              14
+        ///     Density     236         224             72
+        /// RSS             72          60              15
+        /// =================================================================
+        /// 
+        /// </summary>
+        /// <param name="dumpedData"></param>
+        /// <returns>all the curves in a single run</returns>
+        public static List<Dataset> ProcessDumpedData(byte[] dumpedData)
+        {
+            if (dumpedData == null || dumpedData.Length == 0) return null;
+
+            List<Dataset> datasetList = new List<Dataset>();
+            DataPacketList = new List<MemoryDataPacket>();
+            BoardInfoList = new List<BoardInfo>();
+            BoardParamList = new List<BoardParam>();
+
+            int curPos = 0;
+            while (curPos < dumpedData.Length - 2)
+            {
+                int startPos = findSeparators(dumpedData, curPos);
+                startPos += 2;
+
+                if (startPos + 10 >= dumpedData.Length)
+                {   // reaches end of data
+                    break;
+                }
+
+                // marker 此处要修改为新数据包样式，理论上是 5A 5A TIME(共4) 起始符 功能码 数据 CRC校验(共7)
+                //       1  2  3  4  5  6  7  8  9  10
+                // 5A 5A XX XX XX XX XX XX XX XX XX XX data XX XX
+                //       time        d  s  len   o  pr      crc
+                // check src tool address
+                byte toolAddr = dumpedData[startPos + 5];   // 4 byte time + 1 byte dst addr (memory 1 or 2)
+                byte len = dumpedData[startPos + 6];        // 
+                byte obj = dumpedData[startPos + 8];        // 0x87
+                byte param = dumpedData[startPos + 9];      // 
+                int dataLength = 0;
+
+                //if (obj == 0x05)
+                //{   // board info
+                //    int boardInfoDataLength = 22;
+                //    if (len != (boardInfoDataLength + 8))
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = boardInfoDataLength + 12;
+                //}
+                //else if (toolAddr == ToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.MWD, BWEnumBoardAddress.MWD))
+                //{
+                //    if (len != (BWLWDToolsNew.MwdTool.NumOfBytesInMem + 8) || obj != 0x87) // 国家项目
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.MwdTool.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.Resisitivity, BWEnumBoardAddress.DataProcess))
+                //{
+                //    if (len != (BWLWDToolsNew.ResTool.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.ResTool.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.Gamma, BWEnumBoardAddress.Gamma))
+                //{
+                //    if (len != (BWLWDToolsNew.GaTool.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.GaTool.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWNB, BWEnumBoardAddress.NBBatteryControl))
+                //{
+                //    if (len != (BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWNB, BWEnumBoardAddress.DataProcess))
+                //{
+                //    if (len != (BWLWDToolsNew.NearBitTool.ResData.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.NearBitTool.ResData.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWNB, BWEnumBoardAddress.NBAzimuthalGamma))
+                //{
+                //    if (len != (BWLWDToolsNew.NearBitTool.GaData.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.NearBitTool.GaData.NumOfBytesInMem + 12;
+                //}
+                if (toolAddr == ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.BWNB, EnumBoardAddress.NBShorthopRX))
+                {// marker 长度等要注意
+                    if (len != 7 || obj != 0x87)
+                    {
+                        curPos++;
+                        continue;
+                    }
+                    dataLength = 7 + 4;
+                }
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWPV, BWEnumBoardAddress.PressVib))
+                //{
+                //    if (len != (BWPwdData.NumOfBytesInMem + 8) || obj != 0x87) // 24.12.8 PWD下载
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWPwdData.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWRX, BWEnumBoardAddress.DataProcess))
+                //{
+                //    if (len != (BWLWDToolsNew.DirResTool.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.DirResTool.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWDN, BWEnumBoardAddress.DNNeutronDAQ))
+                //{
+                //    if (param == 0x30)
+                //    {   // correction setting
+                //        if (len != (BWNeutronCorrectionSetting.NumOfBytes + 8) || (obj != 0x87 && obj != 0x07))
+                //        {
+                //            curPos++;
+                //            continue;
+                //        }
+                //        dataLength = BWNeutronCorrectionSetting.NumOfBytes + 12;
+                //    }
+                //    // nuclear master data on master/second memory
+                //    else if (param == 0x40)
+                //    {
+                //        if (len != (BWLWDToolsNew.NuclearTool.MasterData.NumOfBytesInMem + 8) || obj != 0x87)
+                //        {
+                //            curPos++;
+                //            continue;
+                //        }
+                //        dataLength = BWLWDToolsNew.NuclearTool.MasterData.NumOfBytesInMem + 12;
+                //    }
+                //    // neutron bin  data on nuclear memory
+                //    else if (param == 0xA0)
+                //    {
+                //        if (len != (BWLWDToolsNew.NuclearTool.NeutronBin.NumOfBytesInMem + 8) || obj != 0x87)
+                //        {
+                //            curPos++;
+                //            continue;
+                //        }
+
+                //        dataLength = BWLWDToolsNew.NuclearTool.NeutronBin.NumOfBytesInMem + 12;
+                //    }
+                //    else
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWDN, BWEnumBoardAddress.DNSonicDAQ))
+                //{
+                //    if (param == 0x30)
+                //    {   // correction setting
+                //        if (len != (BWSonicCorrectionSetting.NumOfBytes + 8) || (obj != 0x87 && obj != 0x07))
+                //        {
+                //            curPos++;
+                //            continue;
+                //        }
+                //        dataLength = BWSonicCorrectionSetting.NumOfBytes + 12;
+                //    }
+                //    else if (param == 0xA0)
+                //    {
+                //        if (len != (BWLWDToolsNew.NuclearTool.SonicBin.NumOfBytesInMem + 8) || obj != 0x87)
+                //        {
+                //            curPos++;
+                //            continue;
+                //        }
+                //        dataLength = BWLWDToolsNew.NuclearTool.SonicBin.NumOfBytesInMem + 12;
+                //    }
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWDN, BWEnumBoardAddress.DNDensityDAQ))
+                //{
+                //    if (param == 0x30)
+                //    {   // correction setting
+                //        if (len != (BWDensityCorrectionSetting.NumOfBytes + 8) || (obj != 0x87 && obj != 0x07))
+                //        {
+                //            curPos++;
+                //            continue;
+                //        }
+                //        dataLength = BWDensityCorrectionSetting.NumOfBytes + 12;
+                //    }
+                //    else if (param == 0xA0)
+                //    {
+                //        if (len != (BWLWDToolsNew.NuclearTool.DensityBin.NumOfBytesInMem + 8) || obj != 0x87)
+                //        {
+                //            curPos++;
+                //            continue;
+                //        }
+                //        dataLength = BWLWDToolsNew.NuclearTool.DensityBin.NumOfBytesInMem + 12;
+                //    }
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWRS, BWEnumBoardAddress.RSShorthop))
+                //{
+                //    // RSS shorthop data on master/second memory
+                //    if (len != (BWLWDToolsNew.RssTool.Shorthop.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.RssTool.Shorthop.NumOfBytesInMem + 12;
+                //}
+                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWRS, BWEnumBoardAddress.RSDownLink))
+                //{
+                //    // RSS downlink data on RSS memory itself
+                //    if (len != (BWLWDToolsNew.RssTool.Downlink.NumOfBytesInMem + 8) || obj != 0x87)
+                //    {
+                //        curPos++;
+                //        continue;
+                //    }
+                //    dataLength = BWLWDToolsNew.RssTool.Downlink.NumOfBytesInMem + 12;
+                //}
+                else
+                {   // tool address incorrect, move curPos, continue
+                    curPos++;
+                    continue;
+                }
+
+                if (startPos + dataLength >= dumpedData.Length)
+                {   // reaches end of data
+                    break;
+                }
+                int endPos = startPos + dataLength;
+
+                byte[] temp = new byte[endPos - startPos];
+                Array.Copy(dumpedData, startPos, temp, 0, endPos - startPos);
+
+                int time = Converter.BytesToInt(temp, 0);
+                byte[] dataPacketBytes = new byte[temp.Length - 4];
+                Array.Copy(temp, 4, dataPacketBytes, 0, temp.Length - 4);// 去掉时间
+
+                // time consuming process
+                processSingleDataPacket(dataPacketBytes, time, datasetList);
+                curPos = endPos;
+
+                //String msg = String.Format("curPos = {0}, {1}, {2}, {3}",
+                //    curPos, datasetList[0].TotalRecords, datasetList[1].TotalRecords, datasetList[10].TotalRecords);
+                //System.Diagnostics.Debug.WriteLine(msg);
+
+                if (startPos - 2 >= 0)
+                {   // create raw data list
+                    //byte[] temp2 = new byte[dataLength + 2];        // 5A 5A + temp 
+                    //Array.Copy(dumpedData, startPos - 2, temp2, 0, dataLength + 2);
+                    // time consuming process
+                    MemoryDataPacket packet = new MemoryDataPacket(dumpedData, startPos - 2, dataLength + 2);
+                    DataPacketList.Add(packet);
+                }
+            }
+
+            //String line = BWConverter.BytesToHexString(dumpedData);
+            //line = BWConverter.AddSpacesToHexString(line);
+            //System.Diagnostics.Debug.WriteLine(line);
+
+            return datasetList;
+        }
+        /// <summary>
+        /// find the index of the separator 0x5A0x5A in a byte array, starting at startPos
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="startPos"></param>
+        /// <returns>if none found, the returned index == startPos</returns>
+        public static int findSeparators(byte[] data, int startPos)
+        {
+            int curPos = startPos;
+            while (curPos < data.Length - 2)
+            {
+                if (data[curPos] != 0x5A || data[curPos + 1] != 0x5A)
+                {
+                    curPos++;
+                    continue;
+                }
+
+                break;
+            }
+
+            return curPos;
+        }
+        /// <summary>
+        /// It will append one packet data to corresponding dataset
+        /// Resistivity and Mwd data are logged in a file, GA data is not logged
+        /// </summary>
+        /// <param name="dataPacketBytes">data in a single dataPacket, without time</param>
+        /// <param name="time"></param>
+        /// <param name="datasetList"></param>
+        private static void processSingleDataPacket(byte[] dataPacketBytes, int time, List<Dataset> datasetList)
+        {
+            if (dataPacketBytes == null || dataPacketBytes.Length != 7) return;
+            if (datasetList == null) return;
+
+            DataPacketGSC dataPacket = new DataPacketGSC(dataPacketBytes);// 新协议
+            String line = dataPacket.ToHexString();
+
+            if (dataPacket.isValidData() == false)
+            {
+                System.Diagnostics.Debug.WriteLine("Invalid " + line);
+
+                String msg = MyStrings.String_Invalid_memroy_data_packet + " " + dataPacket.ToHexString();
+                //if (ShowMessageBox == true)
+                //{
+                //    MessageBox.Show(msg, MyStrings.String_Invalid_memroy_data, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //    ShowMessageBox = false;
+                //}
+
+                String debugMsg = "Info: BWProcessMemoryData::processSingleDataPacket(): " + msg;
+                Utility.DebugLog(debugMsg);
+
+                return;
+            }
+            else
+            {
+                //System.Diagnostics.Debug.WriteLine("Valid datapacket: " + line);
+            }
+
+            /*byte srcAddr = dataPacket.SrcAddr;
+            BWToolBoardAddress address = new BWToolBoardAddress(srcAddr);
+            BWToolCommand cmd = dataPacket.Command;
+            BWCommandHeader header = cmd.Header;
+            int ret = header.Return;
+            int len = dataPacket.PayLoad;
+            byte[] data = cmd.Data;
+
+            //System.Diagnostics.Debug.Assert((data != null) && (data.Length == len - 8));
+            if (header.CmdObject == BWCommandHeader.BWEnumCmdObject.BoardInfo)
+            {
+                BWBoardInfo info = new BWBoardInfo(data);
+                BoardInfoList.Add(info);
+
+                return;
+            }
+
+            if (address.ToolAddress == EnumToolAddress.BWNB)
+            {
+                double[] gscData = BWLWDToolsNew.MwdTool.ProcessMemoryData(time, data, ret);// 这是解析出的数据的数量，暂时不明白为啥要在这里解析一次（这里不是保存文件吗？）
+                System.Diagnostics.Debug.Assert(mwdData != null && mwdData.Length == 13);
+                if (mwdData == null || mwdData.Length != 13) return;
+                appendMwdData(time, mwdData, ret, datasetList);
+            }*/
+        }
     }
 }
 

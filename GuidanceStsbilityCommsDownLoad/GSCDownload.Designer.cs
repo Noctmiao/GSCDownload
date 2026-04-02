@@ -33,8 +33,13 @@
             this.tabs_menu = new AntdUI.Tabs();
             this.download = new AntdUI.TabPage();
             this.panel1 = new AntdUI.Panel();
-            this.listView_ResistivityTool_downloadlist = new AntdUI.Table();
-            this.progress2 = new AntdUI.Progress();
+            this.listViewRuns = new System.Windows.Forms.ListView();
+            this.colRunNumber = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colStartTime = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colEndTime = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colDuration = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.progressBar1 = new AntdUI.Progress();
             this.progress_memoryused = new AntdUI.Progress();
             this.flowLayoutPanel_head = new AntdUI.In.FlowLayoutPanel();
             this.pageHeader2 = new AntdUI.PageHeader();
@@ -44,7 +49,6 @@
             this.button_dump = new AntdUI.Button();
             this.button_clear = new AntdUI.Button();
             this.exportdata = new AntdUI.TabPage();
-            this.listViewRuns = new System.Windows.Forms.ListView();
             this.tabs_menu.SuspendLayout();
             this.download.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -94,8 +98,7 @@
             // panel1
             // 
             this.panel1.Controls.Add(this.listViewRuns);
-            this.panel1.Controls.Add(this.listView_ResistivityTool_downloadlist);
-            this.panel1.Controls.Add(this.progress2);
+            this.panel1.Controls.Add(this.progressBar1);
             this.panel1.Controls.Add(this.progress_memoryused);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(0, 49);
@@ -105,34 +108,63 @@
             this.panel1.TabIndex = 1;
             this.panel1.Text = "panel1";
             // 
-            // listView_ResistivityTool_downloadlist
+            // listViewRuns
             // 
-            this.listView_ResistivityTool_downloadlist.Bordered = true;
-            this.listView_ResistivityTool_downloadlist.EmptyHeader = true;
-            this.listView_ResistivityTool_downloadlist.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
-            this.listView_ResistivityTool_downloadlist.Gap = 8;
-            this.listView_ResistivityTool_downloadlist.Gaps = new System.Drawing.Size(8, 8);
-            this.listView_ResistivityTool_downloadlist.Location = new System.Drawing.Point(268, 50);
-            this.listView_ResistivityTool_downloadlist.Name = "listView_ResistivityTool_downloadlist";
-            this.listView_ResistivityTool_downloadlist.RowHeight = 25;
-            this.listView_ResistivityTool_downloadlist.Size = new System.Drawing.Size(616, 439);
-            this.listView_ResistivityTool_downloadlist.TabIndex = 6;
-            this.listView_ResistivityTool_downloadlist.Text = "table1";
+            this.listViewRuns.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.colRunNumber,
+            this.colStartTime,
+            this.colEndTime,
+            this.colDuration,
+            this.colSize});
+            this.listViewRuns.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listViewRuns.FullRowSelect = true;
+            this.listViewRuns.HideSelection = false;
+            this.listViewRuns.Location = new System.Drawing.Point(10, 44);
+            this.listViewRuns.Name = "listViewRuns";
+            this.listViewRuns.Size = new System.Drawing.Size(616, 439);
+            this.listViewRuns.TabIndex = 13;
+            this.listViewRuns.UseCompatibleStateImageBehavior = false;
+            this.listViewRuns.View = System.Windows.Forms.View.Details;
             // 
-            // progress2
+            // colRunNumber
             // 
-            this.progress2.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.progress2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.progress2.Font = new System.Drawing.Font("微软雅黑", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.progress2.Location = new System.Drawing.Point(10, 10);
-            this.progress2.Name = "progress2";
-            this.progress2.Padding = new System.Windows.Forms.Padding(20, 0, 20, 0);
-            this.progress2.Size = new System.Drawing.Size(616, 34);
-            this.progress2.Steps = 27;
-            this.progress2.TabIndex = 2;
-            this.progress2.Text = "速度000byte/s,剩余00min00s";
-            this.progress2.UseSystemText = true;
-            this.progress2.UseTextCenter = true;
+            this.colRunNumber.Text = "编号";
+            this.colRunNumber.Width = 66;
+            // 
+            // colStartTime
+            // 
+            this.colStartTime.Text = "开始时间";
+            this.colStartTime.Width = 140;
+            // 
+            // colEndTime
+            // 
+            this.colEndTime.Text = "终止时间";
+            this.colEndTime.Width = 140;
+            // 
+            // colDuration
+            // 
+            this.colDuration.Text = "时间间隔（秒）";
+            this.colDuration.Width = 100;
+            // 
+            // colSize
+            // 
+            this.colSize.Text = "占用字节";
+            this.colSize.Width = 93;
+            // 
+            // progressBar1
+            // 
+            this.progressBar1.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.progressBar1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.progressBar1.Font = new System.Drawing.Font("微软雅黑", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.progressBar1.Location = new System.Drawing.Point(10, 10);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Padding = new System.Windows.Forms.Padding(20, 0, 20, 0);
+            this.progressBar1.Size = new System.Drawing.Size(616, 34);
+            this.progressBar1.Steps = 27;
+            this.progressBar1.TabIndex = 2;
+            this.progressBar1.Text = "速度000byte/s,剩余00min00s";
+            this.progressBar1.UseSystemText = true;
+            this.progressBar1.UseTextCenter = true;
             // 
             // progress_memoryused
             // 
@@ -227,6 +259,7 @@
             this.button_dump.TabIndex = 6;
             this.button_dump.Text = "下载";
             this.button_dump.Type = AntdUI.TTypeMini.Primary;
+            this.button_dump.Click += new System.EventHandler(this.button_dump_Click);
             // 
             // button_clear
             // 
@@ -247,15 +280,6 @@
             this.exportdata.Size = new System.Drawing.Size(636, 565);
             this.exportdata.TabIndex = 1;
             this.exportdata.Text = "原始数据";
-            // 
-            // listViewRuns
-            // 
-            this.listViewRuns.HideSelection = false;
-            this.listViewRuns.Location = new System.Drawing.Point(109, 193);
-            this.listViewRuns.Name = "listViewRuns";
-            this.listViewRuns.Size = new System.Drawing.Size(121, 97);
-            this.listViewRuns.TabIndex = 7;
-            this.listViewRuns.UseCompatibleStateImageBehavior = false;
             // 
             // GSCDownload
             // 
@@ -293,9 +317,13 @@
         private AntdUI.Button button_clear;
         private AntdUI.In.FlowLayoutPanel flowLayoutPanel_head;
         private AntdUI.Progress progress_memoryused;
-        private AntdUI.Progress progress2;
-        private AntdUI.Table listView_ResistivityTool_downloadlist;
+        private AntdUI.Progress progressBar1;
         private System.Windows.Forms.ListView listViewRuns;
+        private System.Windows.Forms.ColumnHeader colRunNumber;
+        private System.Windows.Forms.ColumnHeader colStartTime;
+        private System.Windows.Forms.ColumnHeader colEndTime;
+        private System.Windows.Forms.ColumnHeader colDuration;
+        private System.Windows.Forms.ColumnHeader colSize;
     }
 }
 

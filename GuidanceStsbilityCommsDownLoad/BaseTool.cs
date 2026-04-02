@@ -1,4 +1,5 @@
-﻿using MultiPort;
+﻿using GuidanceStsbilityCommsDownLoad;
+using MultiPort;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -153,5 +154,43 @@ namespace GuidanceStsbilityComms
         {
             return String.Concat(String.Join(",", valuePairs.Keys), ",", String.Join(",", valuePairs.Values));
         }
+    }
+
+    [Serializable]
+    public struct BoardInfo
+    {
+        public EnumBoardAddress BoardAddress;
+        public String BoardName;
+        public String Address;
+        public String PCBVersion;
+        public String SerialNumber;
+        public String Firmware;
+
+        // length = 22
+        //public BoardInfo(byte[] dataBytes)
+        //{
+        //    ToolBoardAddress address = new ToolBoardAddress(dataBytes[0]);
+        //    BoardAddress = address.BoardAddress;
+        //    BoardName = address.BoardAddressName;
+
+        //    // get board info from dataBoardInfo
+        //    String boardInfo = BoardInfoObject.GetBoardInfo(BoardInfoObject.BWEnumBoardInfoParameter.BoardParameter, dataBytes);
+        //    String[] bis = boardInfo.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+        //    if (bis.Length >= 4)
+        //    {
+        //        Address = bis[0];
+        //        PCBVersion = bis[1];
+        //        SerialNumber = bis[2];
+        //        Firmware = bis[3];
+        //    }
+        //    else
+        //    {
+        //        Address = String.Empty;
+        //        PCBVersion = String.Empty;
+        //        SerialNumber = String.Empty;
+        //        Firmware = String.Empty;
+        //    }
+        //}
     }
 }

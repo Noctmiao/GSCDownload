@@ -306,6 +306,51 @@ namespace GuidanceStsbilityCommsDownLoad
             ushort r = BitConverter.ToUInt16(data, start);
             return r;
         }
+        /// <summary>
+        /// "MM/dd/yyyy HH:mm:ss.fff", date and miliseconds are optional
+        /// </summary>
+        /// <param name="seconds"></param>
+        /// <param name="showMilliseconds"></param>
+        /// <param name="showDate"></param>
+        /// <returns></returns>
+        public static String SecondsToLongTime(double seconds, bool showMilliseconds, bool showDate)
+        {
+            DateTime dt = new DateTime(1970, 1, 1).AddSeconds(seconds);
+            if (showDate)
+            {
+                if (showMilliseconds == false) return dt.ToString("MM/dd/yyyy HH:mm:ss");
+                else return dt.ToString("MM/dd/yyyy HH:mm:ss.fff");
+            }
+            else
+            {
+                if (showMilliseconds == false) return dt.ToString("yyyy/MM/dd HH:mm:ss");
+                else return dt.ToString("HH:mm:ss.fff");
+            }
+        }
+        /// <summary>
+        /// "yyyyMMdd HHmmss"
+        /// </summary>
+        /// <param name="seconds"></param>
+        /// <returns></returns>
+        public static String SecondsToLongTime2(double seconds)
+        {
+            DateTime dt = new DateTime(1970, 1, 1).AddSeconds(seconds);
+            return dt.ToString("yyyyMMdd HHmmss");
+            //return dt.ToString("HH:mm:ss");
+        }
+        #endregion
+        # region Basic type from/to bytes
+        /// <summary>
+        /// converts a unsigned integer to a byte array of size 4,
+        /// lsb to [0], msb to [3], equivalent to BitConverter.GetBytes(input)
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static byte[] UIntToBytes(uint input)
+        {
+            byte[] bytes = BitConverter.GetBytes(input);
+            return bytes;
+        }
         #endregion
     }
 }

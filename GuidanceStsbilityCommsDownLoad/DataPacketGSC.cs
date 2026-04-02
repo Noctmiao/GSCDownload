@@ -150,6 +150,15 @@ namespace MultiPort
         {
             return databytes;
         }
+        public String ToHexString()
+        {
+            String hex = String.Empty;
+
+            hex = Converter.BytesToHexString(databytes);
+            hex = Converter.AddSpacesToHexString(hex);
+
+            return hex;
+        }
     }
 
 
