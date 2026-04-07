@@ -349,7 +349,8 @@ namespace MultiPort
         }
         public static DataPacketDownloadlist GenerateDataPacket(byte dst, CommandHeader.EnumCmdObject cmdObject, int param, byte[] data)
         {
-            byte src = ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.Surface, EnumBoardAddress.Computer);    // (0x0E) Surface Computer
+            //byte src = ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.Surface, EnumBoardAddress.Computer);    // (0x0E) Surface Computer
+            byte src = 0x3e;    // (0x0E) Surface Computer
 
             int len = 8 + ((data == null) ? 0 : data.Length);
             int ret = 0;
@@ -359,7 +360,7 @@ namespace MultiPort
 
             return dataPacket;
         }
-        /// <summary>
+       /* /// <summary>
         /// update check sum, and returns it. 校验位，最后两字节，格式：0xxx（低八位） 0xxx
         /// </summary>
         /// <returns>check sum as a 2 bytes array</returns>
@@ -376,6 +377,25 @@ namespace MultiPort
             //ushort crc = (ushort)ComputeChecksum(data, data.Length, 0);
             ushort checksum = (ushort)ComputeChecksum2(data, data.Length);
             byte[] checkSumCalc = BitConverter.GetBytes(checksum);
+            Array.Copy(checkSumCalc, 0, dataPacket, len - 2, 2);
+            return checkSumCalc;
+        }*/
+        /// <summary>
+        /// update check sum, and returns it
+        /// </summary>
+        /// <returns>check sum as a 2 bytes array</returns>
+        private byte[] checkSum()
+        {
+            if (isValidLength() == false) return null;
+
+            int len = (int)PayLoad;
+            byte[] data = new byte[len - 2];
+            byte[] checkSum = new byte[2];
+            Array.Copy(dataPacket, 0, data, 0, len - 2);
+            Array.Copy(dataPacket, len - 2, checkSum, 0, 2);
+
+            Crc16 crc16 = new Crc16();
+            byte[] checkSumCalc = crc16.ComputeChecksumBytes(data);
             Array.Copy(checkSumCalc, 0, dataPacket, len - 2, 2);
             return checkSumCalc;
         }

@@ -16,6 +16,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Forms;
 using static GuidanceStsbilityCommsDownLoad.Communication;
 using static System.Resources.ResXFileRef;
@@ -70,6 +71,8 @@ namespace GuidanceStsbilityCommsDownLoad
         // memory info
         private uint memorySize;
         private uint memoryUsed;
+        // currently when clear memory, the first response must be ignored
+        private bool isFirstResponse = true;
 
         // retry
         private int timeOut = 1000;      // 1000 ms
@@ -97,8 +100,9 @@ namespace GuidanceStsbilityCommsDownLoad
             button_dump.Enabled = false;
             button_clear.Enabled = false;
             timerReceive = new System.Windows.Forms.Timer();
-            timerReceive.Interval = 100;
+            timerReceive.Interval = 10;
             timerReceive.Tick += new System.EventHandler(timerReceive_Tick);
+            timerReceive.Enabled = true;
 
             timerDump1 = new System.Windows.Forms.Timer();
             timerDump1.Interval = 100;
@@ -216,7 +220,7 @@ namespace GuidanceStsbilityCommsDownLoad
             button_dump.Enabled = false;
             button_clear.Enabled = false;
         }
-        byte SendDst = 0x13;
+        byte SendDst = 0x3b;
         private void requestMemoryInfo()
         {
             //byte dst = ToolBoardAddress.GetToolBoardAddress(0, 0);// 接收的src
@@ -248,6 +252,7 @@ namespace GuidanceStsbilityCommsDownLoad
             else memoryUsed = Converter.BytesToUInt(data, 4);
 
             progress_memoryused.Text = String.Format("{0}K/{1}K", memoryUsed / 1024, memorySize / 1024);
+            progress_memoryused.Value = memoryUsed * 1.0f / memorySize;
         }
         private void requestGetEntryTableItems()
         {
@@ -296,7 +301,7 @@ namespace GuidanceStsbilityCommsDownLoad
             temp = Converter.UShortToBytes(length);
             Array.Copy(temp, 0, data, 4, 2);
 
-            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.ToolSpecific;
+            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.NearBitMemory;
             //if (whichMemory == 2 || whichMemory == 6 || whichMemory == 0) obj = BWCommandHeader.BWEnumCmdObject.NearBitMemory;// 2.修改源地址：国家项目源地址
             sentDataPacket = DataPacketDownloadlist.GenerateDataPacket(dst, obj, param, data);
 
@@ -306,6 +311,23 @@ namespace GuidanceStsbilityCommsDownLoad
             timerDump1.Interval = timeOut;
             numOfTry = 1;
             timerDump1.Enabled = true;
+        }
+        private void requestClearMemory()
+        {
+            byte dst = SendDst;
+            int param = (int)(ToolSpecificObject.EnumMemoryParameter.Clear);
+            byte[] data = null;
+            data = new byte[] { 0x10, 0x45, 0x34, 0x87, 0x76, 0x12, 0x32, 0x74, 0x22, 0x85 };
+
+            CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.NearBitMemory;
+            sentDataPacket = DataPacketDownloadlist.GenerateDataPacket(dst, obj, param, data);
+
+            IsWaitingForResponse = true;
+            Send(sentDataPacket.ToBytes());
+
+            this.progressBar1.Value = 0;
+            timerDump2.Interval = 1200;
+            timerDump2.Enabled = true;
         }
 
         // send and receive
@@ -642,26 +664,26 @@ namespace GuidanceStsbilityCommsDownLoad
 
             switch (param)
             {
-                //case (int)(ToolSpecificObject.BWEnumMemoryParameter.Clear):
-                //    if (responseClearMemory(receivedDataPacket) == true)
-                //    {
-                //        MessageBox.Show(MyStrings.String_Clear_memory_successful);
-                //        progressBar1.Value = progressBar1.Maximum;
-                //        timer2.Enabled = false;
-                //        enableControls(true);
+                case (int)(ToolSpecificObject.EnumMemoryParameter.Clear):
+                    if (responseClearMemory(receivedDataPacket) == true)
+                    {
+                        MessageBox.Show(MyStrings.String_Clear_memory_successful);
+                        progressBar1.Value = 1;// 最大
+                        timerDump2.Enabled = false;
+                        enableControls(true);
 
-                //        requestMemoryInfo();
-                //    }
-                //    else
-                //    {   // ignore the first response, which is incorrect
-                //        if (isFirstResponse == true)
-                //        {
-                //            isFirstResponse = false;
-                //            IsWaitingForResponse = true;    // keep waiting
-                //        }
-                //        else MessageBox.Show(MyStrings.String_Failed_to_dump_memory);
-                //    }
-                //    break;
+                        requestMemoryInfo();
+                    }
+                    else
+                    {   // ignore the first response, which is incorrect
+                        if (isFirstResponse == true)
+                        {
+                            isFirstResponse = false;
+                            IsWaitingForResponse = true;    // keep waiting
+                        }
+                        else MessageBox.Show(MyStrings.String_Failed_to_dump_memory);
+                    }
+                    break;
                 case (int)(ToolSpecificObject.EnumMemoryParameter.GetMemoryInfo):// 第一次运行到这里
                     responseMemoryInfo(receivedDataPacket);
 
@@ -719,7 +741,8 @@ namespace GuidanceStsbilityCommsDownLoad
                         {   // reaches the end of this dump
                             updateProgressBar(totalSizeToDump);
                             //IsWaitingForResponse = false;
-                            MessageBox.Show(MyStrings.String_Memory_dump_finished_successfully);// marker 可以替换
+                            //MessageBox.Show(MyStrings.String_Memory_dump_finished_successfully);// marker 可以替换
+                            MessageBox.Show("下载完毕");// marker 可以替换
                             return;
                         }
                         else
@@ -875,6 +898,16 @@ namespace GuidanceStsbilityCommsDownLoad
 
             return data.Length - 6;
         }
+        private bool responseClearMemory(DataPacketDownloadlist receivedDataPacket)
+        {
+            if (receivedDataPacket == null ||
+                receivedDataPacket.Command == null ||
+                receivedDataPacket.Command.Header == null) return false;
+
+            bool success = (receivedDataPacket.Command.Header.Return == 0);
+
+            return success;
+        }
         private void refreshDisplay()
         {
             listViewRuns.Items.Clear();
@@ -900,6 +933,12 @@ namespace GuidanceStsbilityCommsDownLoad
                 //String debugMsg = "Info: BWMemoryDumpDlg::refreshDisplay(): " + line;
                 //BWUtility.DebugLog(debugMsg);
             }
+        }
+        private void enableControls(bool enable)
+        {
+            button_readmemory.Enabled = enable;
+            button_dump.Enabled = enable;
+            button_clear.Enabled = enable;
         }
         private void updateProgressBar(int sizeDumped)
         {
@@ -999,6 +1038,17 @@ namespace GuidanceStsbilityCommsDownLoad
             int size = entryItemList[k].NumOfPages * pageSize;
 
             return size;
+        }
+
+        private void button_clear_Click(object sender, EventArgs e)
+        {
+            String warningMsg = MyStrings.String_Do_you_want_to_clear_whole_memory;
+            if (MessageBox.Show(warningMsg, MyStrings.String_Clear_Memory, MessageBoxButtons.OKCancel) == DialogResult.Cancel) return;
+
+            isFirstResponse = true;
+            requestClearMemory();
+
+            enableControls(false);
         }
     }
 

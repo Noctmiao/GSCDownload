@@ -49,11 +49,34 @@
             this.button_dump = new AntdUI.Button();
             this.button_clear = new AntdUI.Button();
             this.exportdata = new AntdUI.TabPage();
+            this.listViewRawData = new System.Windows.Forms.ListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.gridPanel1 = new AntdUI.GridPanel();
+            this.select2 = new AntdUI.Select();
+            this.label4 = new AntdUI.Label();
+            this.input2 = new AntdUI.Input();
+            this.label3 = new AntdUI.Label();
+            this.select1 = new AntdUI.Select();
+            this.label1 = new AntdUI.Label();
+            this.input1 = new AntdUI.Input();
+            this.label2 = new AntdUI.Label();
+            this.gridPanel2 = new AntdUI.GridPanel();
+            this.button1 = new AntdUI.Button();
+            this.buttonRawFile = new AntdUI.UploadDragger();
+            this.pageHeader3 = new AntdUI.PageHeader();
             this.tabs_menu.SuspendLayout();
             this.download.SuspendLayout();
             this.panel1.SuspendLayout();
             this.flowLayoutPanel_head.SuspendLayout();
             this.pageHeader2.SuspendLayout();
+            this.exportdata.SuspendLayout();
+            this.gridPanel1.SuspendLayout();
+            this.gridPanel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // pageHeader1
@@ -71,13 +94,14 @@
             // 
             this.tabs_menu.Controls.Add(this.download);
             this.tabs_menu.Controls.Add(this.exportdata);
-            this.tabs_menu.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.tabs_menu.Cursor = System.Windows.Forms.Cursors.Default;
             this.tabs_menu.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabs_menu.Font = new System.Drawing.Font("微软雅黑", 12F);
             this.tabs_menu.Location = new System.Drawing.Point(0, 35);
             this.tabs_menu.Name = "tabs_menu";
             this.tabs_menu.Pages.Add(this.download);
             this.tabs_menu.Pages.Add(this.exportdata);
+            this.tabs_menu.SelectedIndex = 1;
             this.tabs_menu.Size = new System.Drawing.Size(636, 601);
             this.tabs_menu.Style = styleLine1;
             this.tabs_menu.TabIndex = 1;
@@ -87,8 +111,7 @@
             // 
             this.download.Controls.Add(this.panel1);
             this.download.Controls.Add(this.flowLayoutPanel_head);
-            this.download.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.download.Location = new System.Drawing.Point(0, 36);
+            this.download.Location = new System.Drawing.Point(-1272, -1130);
             this.download.Name = "download";
             this.download.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
             this.download.Size = new System.Drawing.Size(636, 565);
@@ -117,6 +140,7 @@
             this.colDuration,
             this.colSize});
             this.listViewRuns.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listViewRuns.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.listViewRuns.FullRowSelect = true;
             this.listViewRuns.HideSelection = false;
             this.listViewRuns.Location = new System.Drawing.Point(10, 44);
@@ -212,7 +236,7 @@
             this.label_CAN.AutoSizeMode = AntdUI.TAutoSize.Width;
             this.label_CAN.Dock = System.Windows.Forms.DockStyle.Left;
             this.label_CAN.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
-            this.label_CAN.Location = new System.Drawing.Point(232, 0);
+            this.label_CAN.Location = new System.Drawing.Point(126, 0);
             this.label_CAN.Name = "label_CAN";
             this.label_CAN.Size = new System.Drawing.Size(6, 38);
             this.label_CAN.TabIndex = 1;
@@ -225,7 +249,7 @@
             this.button_BlueCAN.Ghost = true;
             this.button_BlueCAN.IconRatio = 1F;
             this.button_BlueCAN.IconSvg = "SettingOutlined";
-            this.button_BlueCAN.Location = new System.Drawing.Point(106, 0);
+            this.button_BlueCAN.Location = new System.Drawing.Point(0, 0);
             this.button_BlueCAN.Name = "button_BlueCAN";
             this.button_BlueCAN.Padding = new System.Windows.Forms.Padding(0, 0, 0, 10);
             this.button_BlueCAN.Size = new System.Drawing.Size(126, 48);
@@ -272,14 +296,213 @@
             this.button_clear.TabIndex = 7;
             this.button_clear.Text = "清空内存";
             this.button_clear.Type = AntdUI.TTypeMini.Error;
+            this.button_clear.Click += new System.EventHandler(this.button_clear_Click);
             // 
             // exportdata
             // 
-            this.exportdata.Location = new System.Drawing.Point(-1272, -1130);
+            this.exportdata.Controls.Add(this.listViewRawData);
+            this.exportdata.Controls.Add(this.gridPanel1);
+            this.exportdata.Controls.Add(this.gridPanel2);
+            this.exportdata.Controls.Add(this.pageHeader3);
+            this.exportdata.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.exportdata.Location = new System.Drawing.Point(0, 36);
             this.exportdata.Name = "exportdata";
             this.exportdata.Size = new System.Drawing.Size(636, 565);
             this.exportdata.TabIndex = 1;
             this.exportdata.Text = "原始数据";
+            // 
+            // listViewRawData
+            // 
+            this.listViewRawData.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3,
+            this.columnHeader4,
+            this.columnHeader5,
+            this.columnHeader6});
+            this.listViewRawData.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listViewRawData.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.listViewRawData.FullRowSelect = true;
+            this.listViewRawData.HideSelection = false;
+            this.listViewRawData.Location = new System.Drawing.Point(0, 156);
+            this.listViewRawData.Name = "listViewRawData";
+            this.listViewRawData.Size = new System.Drawing.Size(636, 409);
+            this.listViewRawData.TabIndex = 7;
+            this.listViewRawData.UseCompatibleStateImageBehavior = false;
+            this.listViewRawData.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "#";
+            this.columnHeader1.Width = 39;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "RawData";
+            this.columnHeader2.Width = 160;
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Valid";
+            this.columnHeader3.Width = 46;
+            // 
+            // columnHeader4
+            // 
+            this.columnHeader4.Text = "Time";
+            this.columnHeader4.Width = 87;
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Type";
+            this.columnHeader5.Width = 43;
+            // 
+            // columnHeader6
+            // 
+            this.columnHeader6.Text = "Data";
+            this.columnHeader6.Width = 253;
+            // 
+            // gridPanel1
+            // 
+            this.gridPanel1.Controls.Add(this.select2);
+            this.gridPanel1.Controls.Add(this.label4);
+            this.gridPanel1.Controls.Add(this.input2);
+            this.gridPanel1.Controls.Add(this.label3);
+            this.gridPanel1.Controls.Add(this.select1);
+            this.gridPanel1.Controls.Add(this.label1);
+            this.gridPanel1.Controls.Add(this.input1);
+            this.gridPanel1.Controls.Add(this.label2);
+            this.gridPanel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.gridPanel1.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.gridPanel1.Location = new System.Drawing.Point(0, 89);
+            this.gridPanel1.Name = "gridPanel1";
+            this.gridPanel1.Size = new System.Drawing.Size(636, 67);
+            this.gridPanel1.Span = "80 35% 35% 25%;\r\n80 35% 35% 25%;";
+            this.gridPanel1.TabIndex = 2;
+            this.gridPanel1.Text = "gridPanel1";
+            // 
+            // select2
+            // 
+            this.select2.Items.AddRange(new object[] {
+            "NB-Gamma s"});
+            this.select2.Location = new System.Drawing.Point(469, 34);
+            this.select2.Margin = new System.Windows.Forms.Padding(0);
+            this.select2.Name = "select2";
+            this.select2.SelectedValue = "NB-Gamma ssss";
+            this.select2.Size = new System.Drawing.Size(139, 34);
+            this.select2.TabIndex = 11;
+            this.select2.Text = "NB-Gamma ss";
+            // 
+            // label4
+            // 
+            this.label4.Location = new System.Drawing.Point(278, 37);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(189, 28);
+            this.label4.TabIndex = 10;
+            this.label4.Text = "选择数据";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // input2
+            // 
+            this.input2.Location = new System.Drawing.Point(80, 34);
+            this.input2.Margin = new System.Windows.Forms.Padding(0);
+            this.input2.Name = "input2";
+            this.input2.Size = new System.Drawing.Size(195, 34);
+            this.input2.TabIndex = 7;
+            this.input2.Text = "01/10/2004 13:37:42";
+            // 
+            // label3
+            // 
+            this.label3.Location = new System.Drawing.Point(3, 37);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(74, 28);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "结束时间";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // select1
+            // 
+            this.select1.Items.AddRange(new object[] {
+            "NB-Gamma s"});
+            this.select1.Location = new System.Drawing.Point(469, 0);
+            this.select1.Margin = new System.Windows.Forms.Padding(0);
+            this.select1.Name = "select1";
+            this.select1.SelectedValue = "NB-Gamma ssss";
+            this.select1.Size = new System.Drawing.Size(139, 34);
+            this.select1.TabIndex = 6;
+            this.select1.Text = "NB-Gamma ss";
+            // 
+            // label1
+            // 
+            this.label1.Location = new System.Drawing.Point(278, 3);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(189, 28);
+            this.label1.TabIndex = 7;
+            this.label1.Text = "选择属性";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // input1
+            // 
+            this.input1.Location = new System.Drawing.Point(80, 0);
+            this.input1.Margin = new System.Windows.Forms.Padding(0);
+            this.input1.Name = "input1";
+            this.input1.Size = new System.Drawing.Size(195, 34);
+            this.input1.TabIndex = 6;
+            this.input1.Text = "01/10/2004 13:37:42";
+            // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(3, 3);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(74, 28);
+            this.label2.TabIndex = 8;
+            this.label2.Text = "开始时间";
+            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // gridPanel2
+            // 
+            this.gridPanel2.Controls.Add(this.button1);
+            this.gridPanel2.Controls.Add(this.buttonRawFile);
+            this.gridPanel2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.gridPanel2.Location = new System.Drawing.Point(0, 38);
+            this.gridPanel2.Name = "gridPanel2";
+            this.gridPanel2.Size = new System.Drawing.Size(636, 51);
+            this.gridPanel2.Span = "80% 20%";
+            this.gridPanel2.TabIndex = 6;
+            this.gridPanel2.Text = "gridPanel2";
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(512, 3);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(121, 45);
+            this.button1.TabIndex = 7;
+            this.button1.Text = "导出到Excel";
+            this.button1.Type = AntdUI.TTypeMini.Primary;
+            // 
+            // buttonRawFile
+            // 
+            this.buttonRawFile.Font = new System.Drawing.Font("微软雅黑", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.buttonRawFile.IconRatio = 1.2F;
+            this.buttonRawFile.IconSvg = "";
+            this.buttonRawFile.Location = new System.Drawing.Point(3, 3);
+            this.buttonRawFile.Name = "buttonRawFile";
+            this.buttonRawFile.Size = new System.Drawing.Size(503, 45);
+            this.buttonRawFile.TabIndex = 1;
+            this.buttonRawFile.Text = "Click or drag file to this area to upload";
+            this.buttonRawFile.TextDesc = "原始内存文件(.dump)";
+            // 
+            // pageHeader3
+            // 
+            this.pageHeader3.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pageHeader3.Font = new System.Drawing.Font("微软雅黑", 12F);
+            this.pageHeader3.HandCursor = System.Windows.Forms.Cursors.Arrow;
+            this.pageHeader3.Location = new System.Drawing.Point(0, 0);
+            this.pageHeader3.Name = "pageHeader3";
+            this.pageHeader3.Size = new System.Drawing.Size(636, 38);
+            this.pageHeader3.SubGap = 0;
+            this.pageHeader3.TabIndex = 5;
+            this.pageHeader3.Text = "文件解析";
+            this.pageHeader3.UseTitleFont = true;
             // 
             // GSCDownload
             // 
@@ -298,6 +521,9 @@
             this.flowLayoutPanel_head.PerformLayout();
             this.pageHeader2.ResumeLayout(false);
             this.pageHeader2.PerformLayout();
+            this.exportdata.ResumeLayout(false);
+            this.gridPanel1.ResumeLayout(false);
+            this.gridPanel2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -324,6 +550,26 @@
         private System.Windows.Forms.ColumnHeader colEndTime;
         private System.Windows.Forms.ColumnHeader colDuration;
         private System.Windows.Forms.ColumnHeader colSize;
+        private AntdUI.GridPanel gridPanel1;
+        private AntdUI.UploadDragger buttonRawFile;
+        private AntdUI.PageHeader pageHeader3;
+        private AntdUI.Input input1;
+        private AntdUI.Label label1;
+        private AntdUI.Select select1;
+        private AntdUI.Label label2;
+        private AntdUI.GridPanel gridPanel2;
+        private AntdUI.Button button1;
+        private AntdUI.Select select2;
+        private AntdUI.Label label4;
+        private AntdUI.Input input2;
+        private AntdUI.Label label3;
+        private System.Windows.Forms.ListView listViewRawData;
+        private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ColumnHeader columnHeader3;
+        private System.Windows.Forms.ColumnHeader columnHeader4;
+        private System.Windows.Forms.ColumnHeader columnHeader5;
+        private System.Windows.Forms.ColumnHeader columnHeader6;
     }
 }
 
