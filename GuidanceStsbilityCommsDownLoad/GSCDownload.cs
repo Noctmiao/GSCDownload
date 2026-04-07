@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using static GuidanceStsbilityCommsDownLoad.Communication;
 using static System.Resources.ResXFileRef;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
@@ -112,6 +113,11 @@ namespace GuidanceStsbilityCommsDownLoad
             timerDump2 = new System.Windows.Forms.Timer();
             timerDump2.Interval = 100;
             timerDump2.Enabled = false;
+
+            // 文件选择器
+            buttonRawFile.Multiselect = false;
+            buttonRawFile.Filter = "Memory raw data file (*.dump)|*.dump";
+            buttonRawFile.HandDragFolder = true;
 
             // table init
             //Init_listView_ResistivityTool_downloadlist();
@@ -1050,6 +1056,106 @@ namespace GuidanceStsbilityCommsDownLoad
 
             enableControls(false);
         }
+
+        #region 解析
+        private List<MemoryDataPacket> dataPacketList;
+        private EnumToolAddress srcToolFilter;
+        private EnumBoardAddress srcBoardFilter;
+        private String startTime;
+        private String endTime;
+        private bool showRawData;
+
+        private void buttonRawFile_DragChanged(object sender, StringsEventArgs e)
+        {
+            string[] filePaths = e.Value;
+            foreach (string path in filePaths)
+            {
+                AntdUI.Message.info(this, path, autoClose: 3);
+                buttonRawFile.Text = path;
+                loadRawData(path);
+            }
+        }
+        private void loadRawData(String fileName)
+        {
+            byte[] dumpedData = loadDumpedDataOneRun(fileName);
+            if (dumpedData == null || dumpedData.Length == 0) return;
+
+            ProcessMemoryData.ProcessDumpedData(dumpedData);
+            dataPacketList = ProcessMemoryData.DataPacketList;
+
+            if (dataPacketList != null && dataPacketList.Count > 0)
+            {
+                startTime = dataPacketList[0].Time;
+                endTime = dataPacketList[dataPacketList.Count - 1].Time;
+            }
+
+            display();
+        }
+        private byte[] loadDumpedDataOneRun(String fileName)
+        {
+            byte[] dumpedData = null;
+            FileStream fs = new FileStream(fileName, FileMode.Open);
+            try
+            {
+                dumpedData = new byte[fs.Length];
+                BinaryReader br = new BinaryReader(fs);
+                br.Read(dumpedData, 0, (int)fs.Length);
+                br.Close();
+                fs.Close();
+            }
+            catch (Exception ex)
+            {
+                String debugMsg = "Info: BWMemoryDumpDlg::loadDumpedDataOneRun(): " + "Fail to read dumped data!" + " " + ex.Message;
+                Utility.DebugLog(debugMsg);
+                if (fs != null) fs.Close();
+            }
+
+            return dumpedData;
+        }
+        private void display()
+        {
+            if (dataPacketList == null || dataPacketList.Count == 0) return;
+            textBoxStart.Text = startTime;
+            textBoxEnd.Text = endTime;
+
+            listViewRawData.Items.Clear();
+            ListViewItem item;
+            for (int i = 0; i < dataPacketList.Count; i++)
+            {
+                MemoryDataPacket packet = dataPacketList[i];
+                if (srcToolFilter != EnumToolAddress.All && packet.Type != srcToolFilter) continue;
+
+                // fitler for nearbit's battery, res and gam
+                if (srcToolFilter == EnumToolAddress.BWNB && packet.SubType != srcBoardFilter) continue;
+
+                // filter for neutron, sonic, and density
+                if (srcToolFilter == EnumToolAddress.BWDN && packet.SubType != srcBoardFilter) continue;
+
+                item = new ListViewItem(i.ToString());
+                listViewRawData.Items.Add(item);
+
+                String temp = Converter.BytesToHexString(packet.DataBytes);
+                temp = Converter.AddSpacesToHexString(temp);
+                item.SubItems.Add(temp);
+                item.SubItems.Add(packet.IsValid ? "Yes" : "No");
+                item.SubItems.Add(packet.Time);
+                item.SubItems.Add(packet.Type.ToString());
+                temp = "";
+                if (packet.RawData != null && packet.RawData.Length > 0)
+                {
+                    if (showRawData == true)
+                    {
+                        foreach (double d in packet.RawData) temp += d.ToString("F4") + " ";
+                    }
+                    else
+                    {
+                        foreach (double d in packet.CalcData) temp += d.ToString("F4") + " ";
+                    }
+                }
+                item.SubItems.Add(temp);
+            }
+        }
+        #endregion
     }
 
 

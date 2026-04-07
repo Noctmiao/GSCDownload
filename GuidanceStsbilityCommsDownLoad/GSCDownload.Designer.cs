@@ -59,11 +59,11 @@
             this.gridPanel1 = new AntdUI.GridPanel();
             this.select2 = new AntdUI.Select();
             this.label4 = new AntdUI.Label();
-            this.input2 = new AntdUI.Input();
+            this.textBoxEnd = new AntdUI.Input();
             this.label3 = new AntdUI.Label();
             this.select1 = new AntdUI.Select();
             this.label1 = new AntdUI.Label();
-            this.input1 = new AntdUI.Input();
+            this.textBoxStart = new AntdUI.Input();
             this.label2 = new AntdUI.Label();
             this.gridPanel2 = new AntdUI.GridPanel();
             this.button1 = new AntdUI.Button();
@@ -94,7 +94,7 @@
             // 
             this.tabs_menu.Controls.Add(this.download);
             this.tabs_menu.Controls.Add(this.exportdata);
-            this.tabs_menu.Cursor = System.Windows.Forms.Cursors.Default;
+            this.tabs_menu.Cursor = System.Windows.Forms.Cursors.Hand;
             this.tabs_menu.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabs_menu.Font = new System.Drawing.Font("微软雅黑", 12F);
             this.tabs_menu.Location = new System.Drawing.Point(0, 35);
@@ -236,7 +236,7 @@
             this.label_CAN.AutoSizeMode = AntdUI.TAutoSize.Width;
             this.label_CAN.Dock = System.Windows.Forms.DockStyle.Left;
             this.label_CAN.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
-            this.label_CAN.Location = new System.Drawing.Point(126, 0);
+            this.label_CAN.Location = new System.Drawing.Point(232, 0);
             this.label_CAN.Name = "label_CAN";
             this.label_CAN.Size = new System.Drawing.Size(6, 38);
             this.label_CAN.TabIndex = 1;
@@ -249,7 +249,7 @@
             this.button_BlueCAN.Ghost = true;
             this.button_BlueCAN.IconRatio = 1F;
             this.button_BlueCAN.IconSvg = "SettingOutlined";
-            this.button_BlueCAN.Location = new System.Drawing.Point(0, 0);
+            this.button_BlueCAN.Location = new System.Drawing.Point(106, 0);
             this.button_BlueCAN.Name = "button_BlueCAN";
             this.button_BlueCAN.Padding = new System.Windows.Forms.Padding(0, 0, 0, 10);
             this.button_BlueCAN.Size = new System.Drawing.Size(126, 48);
@@ -365,11 +365,11 @@
             // 
             this.gridPanel1.Controls.Add(this.select2);
             this.gridPanel1.Controls.Add(this.label4);
-            this.gridPanel1.Controls.Add(this.input2);
+            this.gridPanel1.Controls.Add(this.textBoxEnd);
             this.gridPanel1.Controls.Add(this.label3);
             this.gridPanel1.Controls.Add(this.select1);
             this.gridPanel1.Controls.Add(this.label1);
-            this.gridPanel1.Controls.Add(this.input1);
+            this.gridPanel1.Controls.Add(this.textBoxStart);
             this.gridPanel1.Controls.Add(this.label2);
             this.gridPanel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.gridPanel1.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
@@ -401,14 +401,14 @@
             this.label4.Text = "选择数据";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // input2
+            // textBoxEnd
             // 
-            this.input2.Location = new System.Drawing.Point(80, 34);
-            this.input2.Margin = new System.Windows.Forms.Padding(0);
-            this.input2.Name = "input2";
-            this.input2.Size = new System.Drawing.Size(195, 34);
-            this.input2.TabIndex = 7;
-            this.input2.Text = "01/10/2004 13:37:42";
+            this.textBoxEnd.Location = new System.Drawing.Point(80, 34);
+            this.textBoxEnd.Margin = new System.Windows.Forms.Padding(0);
+            this.textBoxEnd.Name = "textBoxEnd";
+            this.textBoxEnd.Size = new System.Drawing.Size(195, 34);
+            this.textBoxEnd.TabIndex = 7;
+            this.textBoxEnd.Text = "01/10/2004 13:37:42";
             // 
             // label3
             // 
@@ -440,14 +440,14 @@
             this.label1.Text = "选择属性";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // input1
+            // textBoxStart
             // 
-            this.input1.Location = new System.Drawing.Point(80, 0);
-            this.input1.Margin = new System.Windows.Forms.Padding(0);
-            this.input1.Name = "input1";
-            this.input1.Size = new System.Drawing.Size(195, 34);
-            this.input1.TabIndex = 6;
-            this.input1.Text = "01/10/2004 13:37:42";
+            this.textBoxStart.Location = new System.Drawing.Point(80, 0);
+            this.textBoxStart.Margin = new System.Windows.Forms.Padding(0);
+            this.textBoxStart.Name = "textBoxStart";
+            this.textBoxStart.Size = new System.Drawing.Size(195, 34);
+            this.textBoxStart.TabIndex = 6;
+            this.textBoxStart.Text = "01/10/2004 13:37:42";
             // 
             // label2
             // 
@@ -490,6 +490,7 @@
             this.buttonRawFile.TabIndex = 1;
             this.buttonRawFile.Text = "Click or drag file to this area to upload";
             this.buttonRawFile.TextDesc = "原始内存文件(.dump)";
+            this.buttonRawFile.DragChanged += new AntdUI.IControl.DragEventHandler(this.buttonRawFile_DragChanged);
             // 
             // pageHeader3
             // 
@@ -553,7 +554,7 @@
         private AntdUI.GridPanel gridPanel1;
         private AntdUI.UploadDragger buttonRawFile;
         private AntdUI.PageHeader pageHeader3;
-        private AntdUI.Input input1;
+        private AntdUI.Input textBoxStart;
         private AntdUI.Label label1;
         private AntdUI.Select select1;
         private AntdUI.Label label2;
@@ -561,7 +562,7 @@
         private AntdUI.Button button1;
         private AntdUI.Select select2;
         private AntdUI.Label label4;
-        private AntdUI.Input input2;
+        private AntdUI.Input textBoxEnd;
         private AntdUI.Label label3;
         private System.Windows.Forms.ListView listViewRawData;
         private System.Windows.Forms.ColumnHeader columnHeader1;
