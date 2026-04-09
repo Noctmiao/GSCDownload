@@ -116,6 +116,26 @@ namespace GuidanceStsbilityCommsDownLoad
         public double Step;             // (step == 0) <==> not regular step
         public double MinValue;
         public double MaxValue;
+        public Dataset()
+        {
+            Name = String.Empty;
+            DataType = DataType.typeDataCurve;
+            DepthType = DepthType.typeDepthMD;
+            DepthUnit = String.Empty;
+            ValueUnit = String.Empty;
+            TotalColumns = 2;
+            ColumnNames = new String[TotalColumns];
+            ColumnNames[0] = "Depth";
+            ColumnNames[1] = "Value";
+            DataID = 0;
+            Sortable = true;
+            dataPointList = null;
+            StartDepth = 0.0;
+            EndDepth = 0.0;
+            Step = 0.0;
+            InterpolateFlag = InterpolateFlag.flagInterpolateLine;
+            Comment = "";
+        }
         public Dataset(Dataset ds)
         {
             Name = ds.Name;
@@ -260,7 +280,16 @@ namespace GuidanceStsbilityCommsDownLoad
         {
             return Name.CompareTo(rhs.Name);
         }
+        public void AppendData(ADataPoint newDataPoint)
+        {
+            if (newDataPoint == null) return;
+
+            if (dataPointList == null) dataPointList = new List<ADataPoint>();
+
+            dataPointList.Add(newDataPoint);
+        }
     }
+
     [Serializable]
     public class ADataPoint : IComparable<ADataPoint>
     {

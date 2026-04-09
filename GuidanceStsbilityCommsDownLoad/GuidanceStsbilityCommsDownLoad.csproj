@@ -70,6 +70,7 @@
     <Compile Include="Communication.cs" />
     <Compile Include="Protocol.cs" />
     <Compile Include="RealtimeMemoryData.cs" />
+    <Compile Include="Unit.cs" />
     <Compile Include="Utility.cs" />
     <EmbeddedResource Include="GSCDownload.resx">
       <DependentUpon>GSCDownload.cs</DependentUpon>

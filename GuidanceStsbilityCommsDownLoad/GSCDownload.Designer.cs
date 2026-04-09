@@ -57,16 +57,16 @@
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.gridPanel1 = new AntdUI.GridPanel();
-            this.select2 = new AntdUI.Select();
+            this.comboBoxRawOrCalcData = new AntdUI.Select();
             this.label4 = new AntdUI.Label();
             this.textBoxEnd = new AntdUI.Input();
             this.label3 = new AntdUI.Label();
-            this.select1 = new AntdUI.Select();
+            this.comboBoxSrcToolFilter = new AntdUI.Select();
             this.label1 = new AntdUI.Label();
             this.textBoxStart = new AntdUI.Input();
             this.label2 = new AntdUI.Label();
             this.gridPanel2 = new AntdUI.GridPanel();
-            this.button1 = new AntdUI.Button();
+            this.buttonExportToExcel2 = new AntdUI.Button();
             this.buttonRawFile = new AntdUI.UploadDragger();
             this.pageHeader3 = new AntdUI.PageHeader();
             this.tabs_menu.SuspendLayout();
@@ -363,11 +363,11 @@
             // 
             // gridPanel1
             // 
-            this.gridPanel1.Controls.Add(this.select2);
+            this.gridPanel1.Controls.Add(this.comboBoxRawOrCalcData);
             this.gridPanel1.Controls.Add(this.label4);
             this.gridPanel1.Controls.Add(this.textBoxEnd);
             this.gridPanel1.Controls.Add(this.label3);
-            this.gridPanel1.Controls.Add(this.select1);
+            this.gridPanel1.Controls.Add(this.comboBoxSrcToolFilter);
             this.gridPanel1.Controls.Add(this.label1);
             this.gridPanel1.Controls.Add(this.textBoxStart);
             this.gridPanel1.Controls.Add(this.label2);
@@ -380,17 +380,17 @@
             this.gridPanel1.TabIndex = 2;
             this.gridPanel1.Text = "gridPanel1";
             // 
-            // select2
+            // comboBoxRawOrCalcData
             // 
-            this.select2.Items.AddRange(new object[] {
-            "NB-Gamma s"});
-            this.select2.Location = new System.Drawing.Point(469, 34);
-            this.select2.Margin = new System.Windows.Forms.Padding(0);
-            this.select2.Name = "select2";
-            this.select2.SelectedValue = "NB-Gamma ssss";
-            this.select2.Size = new System.Drawing.Size(139, 34);
-            this.select2.TabIndex = 11;
-            this.select2.Text = "NB-Gamma ss";
+            this.comboBoxRawOrCalcData.Items.AddRange(new object[] {
+            "Raw Data",
+            "Calc Data"});
+            this.comboBoxRawOrCalcData.Location = new System.Drawing.Point(469, 34);
+            this.comboBoxRawOrCalcData.Margin = new System.Windows.Forms.Padding(0);
+            this.comboBoxRawOrCalcData.Name = "comboBoxRawOrCalcData";
+            this.comboBoxRawOrCalcData.Size = new System.Drawing.Size(139, 34);
+            this.comboBoxRawOrCalcData.TabIndex = 11;
+            this.comboBoxRawOrCalcData.SelectedIndexChanged += new AntdUI.IntEventHandler(this.comboBoxRawOrCalcData_SelectedIndexChanged);
             // 
             // label4
             // 
@@ -419,17 +419,29 @@
             this.label3.Text = "结束时间";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // select1
+            // comboBoxSrcToolFilter
             // 
-            this.select1.Items.AddRange(new object[] {
-            "NB-Gamma s"});
-            this.select1.Location = new System.Drawing.Point(469, 0);
-            this.select1.Margin = new System.Windows.Forms.Padding(0);
-            this.select1.Name = "select1";
-            this.select1.SelectedValue = "NB-Gamma ssss";
-            this.select1.Size = new System.Drawing.Size(139, 34);
-            this.select1.TabIndex = 6;
-            this.select1.Text = "NB-Gamma ss";
+            this.comboBoxSrcToolFilter.Items.AddRange(new object[] {
+            "All",
+            "Mwd",
+            "Res",
+            "Gam",
+            "NB-Battery",
+            "NB-Res",
+            "NB-Gam",
+            "NB-Rx",
+            "Pwd",
+            "Neutron",
+            "Sonic",
+            "Density",
+            "DirRes",
+            "RSS"});
+            this.comboBoxSrcToolFilter.Location = new System.Drawing.Point(469, 0);
+            this.comboBoxSrcToolFilter.Margin = new System.Windows.Forms.Padding(0);
+            this.comboBoxSrcToolFilter.Name = "comboBoxSrcToolFilter";
+            this.comboBoxSrcToolFilter.Size = new System.Drawing.Size(139, 34);
+            this.comboBoxSrcToolFilter.TabIndex = 6;
+            this.comboBoxSrcToolFilter.SelectedIndexChanged += new AntdUI.IntEventHandler(this.comboBoxSrcToolFilter_SelectedIndexChanged);
             // 
             // label1
             // 
@@ -460,7 +472,7 @@
             // 
             // gridPanel2
             // 
-            this.gridPanel2.Controls.Add(this.button1);
+            this.gridPanel2.Controls.Add(this.buttonExportToExcel2);
             this.gridPanel2.Controls.Add(this.buttonRawFile);
             this.gridPanel2.Dock = System.Windows.Forms.DockStyle.Top;
             this.gridPanel2.Location = new System.Drawing.Point(0, 38);
@@ -470,14 +482,15 @@
             this.gridPanel2.TabIndex = 6;
             this.gridPanel2.Text = "gridPanel2";
             // 
-            // button1
+            // buttonExportToExcel2
             // 
-            this.button1.Location = new System.Drawing.Point(512, 3);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(121, 45);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "导出到Excel";
-            this.button1.Type = AntdUI.TTypeMini.Primary;
+            this.buttonExportToExcel2.Location = new System.Drawing.Point(512, 3);
+            this.buttonExportToExcel2.Name = "buttonExportToExcel2";
+            this.buttonExportToExcel2.Size = new System.Drawing.Size(121, 45);
+            this.buttonExportToExcel2.TabIndex = 7;
+            this.buttonExportToExcel2.Text = "导出到Excel";
+            this.buttonExportToExcel2.Type = AntdUI.TTypeMini.Primary;
+            this.buttonExportToExcel2.Click += new System.EventHandler(this.buttonExportToExcel2_Click);
             // 
             // buttonRawFile
             // 
@@ -556,11 +569,11 @@
         private AntdUI.PageHeader pageHeader3;
         private AntdUI.Input textBoxStart;
         private AntdUI.Label label1;
-        private AntdUI.Select select1;
+        private AntdUI.Select comboBoxSrcToolFilter;
         private AntdUI.Label label2;
         private AntdUI.GridPanel gridPanel2;
-        private AntdUI.Button button1;
-        private AntdUI.Select select2;
+        private AntdUI.Button buttonExportToExcel2;
+        private AntdUI.Select comboBoxRawOrCalcData;
         private AntdUI.Label label4;
         private AntdUI.Input textBoxEnd;
         private AntdUI.Label label3;

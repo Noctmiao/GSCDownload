@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GuidanceStsbilityComms
 {
@@ -17,6 +19,8 @@ namespace GuidanceStsbilityComms
                 0x0b,0x0c,0x0d,0x0e,0x0f,0x10,
                 0x11,0x12,0x16
             };
+        public int NumOfDataInMem = 5;// 内存中存储数据个数
+        public int NumOfBytesInMem = 7;// 内存中数据长度
 
         public bool IsGravityToolface// 工具面
         {
@@ -154,6 +158,46 @@ namespace GuidanceStsbilityComms
         {
             return String.Concat(String.Join(",", valuePairs.Keys), ",", String.Join(",", valuePairs.Values));
         }
+
+        public double[] ProcessMemoryData(int time, byte[] data7Bytes)
+        {
+            if (data7Bytes == null || data7Bytes.Length != DataNumofBytes) return null;
+            BaseTool bt = new BaseTool();
+            bt.ProcessDataPacket(new DataPacketReceived(data7Bytes));
+            double[] data = new double[NumOfDataInMem];// 功能码、工具面类型、工具面、转速、参数
+            data[0] = bt.FuncByte;
+            data[1] = bt.IsGravityToolface ? 1 : 0;
+            data[2] = bt.Toolface;
+            data[3] = bt.Gyrospeed;
+            data[4] = bt.parameter;
+            //MemoryLog(time, data, errCode, LogFileName);// 写入日志感觉不需要
+
+            double[] gscData = data;
+            return gscData;
+        }
+        ///// <summary>
+        ///// It will convert nearbit byte data to nearbit floating data, depends on subType
+        ///// </summary>
+        ///// <param name="subType">BCControl, Res, or DirGamma</param>
+        ///// <returns>16, 9, or 10</returns>
+        //public double[] ProcessMemoryData(EnumBoardAddress subType, int time, byte[] dataBytes, int errCode)
+        //{
+        //    if (dataBytes == null) return null;
+        //    if (subType == EnumBoardAddress.NBBatteryControl && dataBytes.Length != NumOfBytesInMem) return null;// marker
+
+        //    String logFileName = "";
+        //    double[] dataNB = null;
+        //    if (subType == EnumBoardAddress.NBBatteryControl)// marker
+        //    {
+        //        BWNBGammaData gamData = BWNBGammaData.ToObject(dataBytes);
+        //        dataNB = gamData.ToDoubles();
+        //        logFileName = GaData.LogFileName;
+        //    }
+
+        //    BaseTool.MemoryLog(time, dataNB, errCode, logFileName);
+
+        //    return dataNB;
+        //}
     }
 
     [Serializable]

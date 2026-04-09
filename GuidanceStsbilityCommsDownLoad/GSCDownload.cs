@@ -13,6 +13,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Net;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -121,6 +122,8 @@ namespace GuidanceStsbilityCommsDownLoad
 
             // table init
             //Init_listView_ResistivityTool_downloadlist();
+            // tool
+            GSCTool = new BaseTool();
             // antdui init
             Config.IsLight = true;
             BackColor = Color.White;
@@ -1156,6 +1159,44 @@ namespace GuidanceStsbilityCommsDownLoad
             }
         }
         #endregion
+        #region excel
+        private void buttonExportToExcel2_Click(object sender, EventArgs e)
+        {
+            // convert dataPacketList to datasetList
+            if (dataPacketList == null || dataPacketList.Count == 0) return;
+            // only allow export when source tool is selected
+            if (srcToolFilter == EnumToolAddress.All)
+            {
+                MessageBox.Show("Please select a tool from dropdown to export!");
+                return;
+            }
+
+            Dataset dataset = new Dataset();
+
+
+        }
+        private void comboBoxSrcToolFilter_SelectedIndexChanged(object sender, IntEventArgs e)
+        {
+            if (comboBoxSrcToolFilter.SelectedIndex == 0) srcToolFilter = EnumToolAddress.All;
+            else if (comboBoxSrcToolFilter.SelectedIndex == 3) srcToolFilter = EnumToolAddress.Gamma;
+            else if (comboBoxSrcToolFilter.SelectedIndex == 7)
+            {
+                srcToolFilter = EnumToolAddress.BWNB;
+                srcBoardFilter = EnumBoardAddress.NBShorthopRX;
+            }
+
+            display();
+        }
+        private void comboBoxRawOrCalcData_SelectedIndexChanged(object sender, IntEventArgs e)
+        {
+            if (comboBoxRawOrCalcData.SelectedIndex == 0) showRawData = true;
+            else showRawData = false;
+
+            display();
+        }
+        #endregion
+
+
     }
 
 
@@ -1220,29 +1261,32 @@ namespace GuidanceStsbilityCommsDownLoad
             errMsg = String.Empty;
 
             if (dataBytes == null || dataBytes.Length == 0) return;
-            if (dataBytes.Length < 6 + 8) return;
+            if (dataBytes.Length < 6 + 7) return;
 
             //       1  2  3  4  5  6  7  8  9  10
             // 5A 5A XX XX XX XX XX XX XX XX XX XX data XX XX
             //       time        d  s  len   o  pr      crc
             // check src tool address
-            byte toolAddr = dataBytes[7];   // 0x5A 0x5A + 4 byte time + 1 byte dst addr (memory 1 or 2)
-            byte len = dataBytes[8];        // 0x34, 0x48, 0x0C
-            byte obj = dataBytes[10];       // 0x87
+            //byte toolAddr = dataBytes[7];   // 0x5A 0x5A + 4 byte time + 1 byte dst addr (memory 1 or 2)
+            //byte len = dataBytes[8];        // 0x34, 0x48, 0x0C
+            //byte obj = dataBytes[10];       // 0x87
+            //int dataLength = 0;
+
+            // 修改后↓
+            //       1  2  3  4        5-11
+            // 5A 5A XX XX XX XX       data
+            //       time        全旋转数据包(7)
+            //byte toolAddr = dataBytes[7];   
+            //byte len = 7;
+            //byte obj = dataBytes[10];       // 0x87
             int dataLength = 0;
 
-            if (toolAddr == ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.BWNB, EnumBoardAddress.NBBatteryControl))
-            {// marker
-                //if (len != (BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 8) || obj != 0x87)
-                //{
-                //    isValid = false;
-                //    errMsg = "Length doesn't match! (NBBC, 0x2B)";
-                //    return;
-                //}
-                //dataLength = BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 12;
-                //type = BWEnumToolAddress.BWNB;
-                //subType = BWEnumBoardAddress.NBBatteryControl;
-            }
+            //if (toolAddr == ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.BWNB, EnumBoardAddress.NBBatteryControl))
+            //{
+            dataLength = GSCDownload.GSCTool.NumOfBytesInMem + 4;// 加上时间
+            type = EnumToolAddress.BWNB;// marker
+            subType = EnumBoardAddress.NBBatteryControl;
+            //}
 
             if (dataLength > dataBytes.Length - 2)
             {   // reaches end of data
@@ -1255,20 +1299,20 @@ namespace GuidanceStsbilityCommsDownLoad
             time = Converter.SecondsToLongTime(seconds, false, true);
             byte[] dataPacketBytes = new byte[dataLength - 4];
             Array.Copy(dataBytes, 6, dataPacketBytes, 0, dataLength - 4);
-            DataPacketGSC dataPacket = new DataPacketGSC(dataPacketBytes);// marker
+            DataPacketReceived dataPacket = new DataPacketReceived(dataPacketBytes);
 
             if (dataPacket.isValidData() == true)
             {
                 isValid = true;
 
-                if (type == EnumToolAddress.BWNB)
-                {// marker
-                    //rawData = BWLWDToolsNew.NearBitTool.ProcessMemoryData(subType, seconds, dataPacket.Command.Data, dataPacket.Command.Header.Return);
-                    //if (rawData != null && rawData.Length > 0)
-                    //{
-                    //    calcData = new double[rawData.Length];
-                    //    Array.Copy(rawData, calcData, rawData.Length);
-                    //}
+                if (type == EnumToolAddress.BWNB)// marker
+                {// marker 这里修改了调用的函数重载
+                    rawData = GSCDownload.GSCTool.ProcessMemoryData(seconds, dataPacketBytes);
+                    if (rawData != null && rawData.Length > 0)
+                    {
+                        calcData = new double[rawData.Length];
+                        Array.Copy(rawData, calcData, rawData.Length);
+                    }
                 }
             }
         }
@@ -1320,7 +1364,7 @@ namespace GuidanceStsbilityCommsDownLoad
                 int startPos = findSeparators(dumpedData, curPos);
                 startPos += 2;
 
-                if (startPos + 10 >= dumpedData.Length)
+                if (startPos + 4 >= dumpedData.Length)// 读完时间
                 {   // reaches end of data
                     break;
                 }
@@ -1330,208 +1374,32 @@ namespace GuidanceStsbilityCommsDownLoad
                 // 5A 5A XX XX XX XX XX XX XX XX XX XX data XX XX
                 //       time        d  s  len   o  pr      crc
                 // check src tool address
-                byte toolAddr = dumpedData[startPos + 5];   // 4 byte time + 1 byte dst addr (memory 1 or 2)
-                byte len = dumpedData[startPos + 6];        // 
-                byte obj = dumpedData[startPos + 8];        // 0x87
-                byte param = dumpedData[startPos + 9];      // 
+                //byte toolAddr = dumpedData[startPos + 5];   // 4 byte time + 1 byte dst addr (memory 1 or 2)
+                //byte len = dumpedData[startPos + 6];        // 
+                //byte obj = dumpedData[startPos + 8];        // 0x87
+                //byte param = dumpedData[startPos + 9];      // 
                 int dataLength = 0;
 
-                //if (obj == 0x05)
-                //{   // board info
-                //    int boardInfoDataLength = 22;
-                //    if (len != (boardInfoDataLength + 8))
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = boardInfoDataLength + 12;
-                //}
-                //else if (toolAddr == ToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.MWD, BWEnumBoardAddress.MWD))
-                //{
-                //    if (len != (BWLWDToolsNew.MwdTool.NumOfBytesInMem + 8) || obj != 0x87) // 国家项目
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.MwdTool.NumOfBytesInMem + 12;
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.Resisitivity, BWEnumBoardAddress.DataProcess))
-                //{
-                //    if (len != (BWLWDToolsNew.ResTool.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.ResTool.NumOfBytesInMem + 12;
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.Gamma, BWEnumBoardAddress.Gamma))
-                //{
-                //    if (len != (BWLWDToolsNew.GaTool.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.GaTool.NumOfBytesInMem + 12;
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWNB, BWEnumBoardAddress.NBBatteryControl))
-                //{
-                //    if (len != (BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.NearBitTool.Status.NumOfBytesInMem + 12;
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWNB, BWEnumBoardAddress.DataProcess))
-                //{
-                //    if (len != (BWLWDToolsNew.NearBitTool.ResData.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.NearBitTool.ResData.NumOfBytesInMem + 12;
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWNB, BWEnumBoardAddress.NBAzimuthalGamma))
-                //{
-                //    if (len != (BWLWDToolsNew.NearBitTool.GaData.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.NearBitTool.GaData.NumOfBytesInMem + 12;
-                //}
-                if (toolAddr == ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.BWNB, EnumBoardAddress.NBShorthopRX))
-                {// marker 长度等要注意
-                    if (len != 7 || obj != 0x87)
-                    {
-                        curPos++;
-                        continue;
-                    }
-                    dataLength = 7 + 4;
-                }
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWPV, BWEnumBoardAddress.PressVib))
-                //{
-                //    if (len != (BWPwdData.NumOfBytesInMem + 8) || obj != 0x87) // 24.12.8 PWD下载
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWPwdData.NumOfBytesInMem + 12;
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWRX, BWEnumBoardAddress.DataProcess))
-                //{
-                //    if (len != (BWLWDToolsNew.DirResTool.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.DirResTool.NumOfBytesInMem + 12;
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWDN, BWEnumBoardAddress.DNNeutronDAQ))
-                //{
-                //    if (param == 0x30)
-                //    {   // correction setting
-                //        if (len != (BWNeutronCorrectionSetting.NumOfBytes + 8) || (obj != 0x87 && obj != 0x07))
-                //        {
-                //            curPos++;
-                //            continue;
-                //        }
-                //        dataLength = BWNeutronCorrectionSetting.NumOfBytes + 12;
-                //    }
-                //    // nuclear master data on master/second memory
-                //    else if (param == 0x40)
-                //    {
-                //        if (len != (BWLWDToolsNew.NuclearTool.MasterData.NumOfBytesInMem + 8) || obj != 0x87)
-                //        {
-                //            curPos++;
-                //            continue;
-                //        }
-                //        dataLength = BWLWDToolsNew.NuclearTool.MasterData.NumOfBytesInMem + 12;
-                //    }
-                //    // neutron bin  data on nuclear memory
-                //    else if (param == 0xA0)
-                //    {
-                //        if (len != (BWLWDToolsNew.NuclearTool.NeutronBin.NumOfBytesInMem + 8) || obj != 0x87)
-                //        {
-                //            curPos++;
-                //            continue;
-                //        }
+                // 修改后↓
+                //       1  2  3  4        5-11
+                // 5A 5A XX XX XX XX       data
+                //       time        全旋转数据包(7)
 
-                //        dataLength = BWLWDToolsNew.NuclearTool.NeutronBin.NumOfBytesInMem + 12;
-                //    }
-                //    else
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWDN, BWEnumBoardAddress.DNSonicDAQ))
+                //if (toolAddr == ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.BWNB, EnumBoardAddress.NBShorthopRX))
+                //{// marker 长度等要注意
+                //if (len != 7 || obj != 0x87)
                 //{
-                //    if (param == 0x30)
-                //    {   // correction setting
-                //        if (len != (BWSonicCorrectionSetting.NumOfBytes + 8) || (obj != 0x87 && obj != 0x07))
-                //        {
-                //            curPos++;
-                //            continue;
-                //        }
-                //        dataLength = BWSonicCorrectionSetting.NumOfBytes + 12;
-                //    }
-                //    else if (param == 0xA0)
-                //    {
-                //        if (len != (BWLWDToolsNew.NuclearTool.SonicBin.NumOfBytesInMem + 8) || obj != 0x87)
-                //        {
-                //            curPos++;
-                //            continue;
-                //        }
-                //        dataLength = BWLWDToolsNew.NuclearTool.SonicBin.NumOfBytesInMem + 12;
-                //    }
+                //    curPos++;
+                //    continue;
                 //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWDN, BWEnumBoardAddress.DNDensityDAQ))
-                //{
-                //    if (param == 0x30)
-                //    {   // correction setting
-                //        if (len != (BWDensityCorrectionSetting.NumOfBytes + 8) || (obj != 0x87 && obj != 0x07))
-                //        {
-                //            curPos++;
-                //            continue;
-                //        }
-                //        dataLength = BWDensityCorrectionSetting.NumOfBytes + 12;
-                //    }
-                //    else if (param == 0xA0)
-                //    {
-                //        if (len != (BWLWDToolsNew.NuclearTool.DensityBin.NumOfBytesInMem + 8) || obj != 0x87)
-                //        {
-                //            curPos++;
-                //            continue;
-                //        }
-                //        dataLength = BWLWDToolsNew.NuclearTool.DensityBin.NumOfBytesInMem + 12;
-                //    }
+                dataLength = 7 + 4;
                 //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWRS, BWEnumBoardAddress.RSShorthop))
-                //{
-                //    // RSS shorthop data on master/second memory
-                //    if (len != (BWLWDToolsNew.RssTool.Shorthop.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.RssTool.Shorthop.NumOfBytesInMem + 12;
+
+                //else
+                //{   // tool address incorrect, move curPos, continue
+                //    curPos++;
+                //    continue;
                 //}
-                //else if (toolAddr == BWToolBoardAddress.GetToolBoardAddress(BWEnumToolAddress.BWRS, BWEnumBoardAddress.RSDownLink))
-                //{
-                //    // RSS downlink data on RSS memory itself
-                //    if (len != (BWLWDToolsNew.RssTool.Downlink.NumOfBytesInMem + 8) || obj != 0x87)
-                //    {
-                //        curPos++;
-                //        continue;
-                //    }
-                //    dataLength = BWLWDToolsNew.RssTool.Downlink.NumOfBytesInMem + 12;
-                //}
-                else
-                {   // tool address incorrect, move curPos, continue
-                    curPos++;
-                    continue;
-                }
 
                 if (startPos + dataLength >= dumpedData.Length)
                 {   // reaches end of data
@@ -1547,7 +1415,7 @@ namespace GuidanceStsbilityCommsDownLoad
                 Array.Copy(temp, 4, dataPacketBytes, 0, temp.Length - 4);// 去掉时间
 
                 // time consuming process
-                processSingleDataPacket(dataPacketBytes, time, datasetList);
+                processSingleDataPacket(dataPacketBytes, time, datasetList);// 在 C# 里，List<T> 是 引用类型
                 curPos = endPos;
 
                 //String msg = String.Format("curPos = {0}, {1}, {2}, {3}",
@@ -1601,31 +1469,27 @@ namespace GuidanceStsbilityCommsDownLoad
         /// <param name="datasetList"></param>
         private static void processSingleDataPacket(byte[] dataPacketBytes, int time, List<Dataset> datasetList)
         {
-            if (dataPacketBytes == null || dataPacketBytes.Length != 7) return;
+            if (dataPacketBytes == null || dataPacketBytes.Length != 7) return;// 
             if (datasetList == null) return;
 
-            DataPacketGSC dataPacket = new DataPacketGSC(dataPacketBytes);// 新协议
+            DataPacketReceived dataPacket = new DataPacketReceived(dataPacketBytes);// 新协议
             String line = dataPacket.ToHexString();
 
             if (dataPacket.isValidData() == false)
             {
                 System.Diagnostics.Debug.WriteLine("Invalid " + line);
 
-                String msg = MyStrings.String_Invalid_memroy_data_packet + " " + dataPacket.ToHexString();
+                String msg = "String_Invalid_memroy_data_packet" + " " + dataPacket.ToHexString();
                 //if (ShowMessageBox == true)
                 //{
                 //    MessageBox.Show(msg, MyStrings.String_Invalid_memroy_data, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 //    ShowMessageBox = false;
                 //}
 
-                String debugMsg = "Info: BWProcessMemoryData::processSingleDataPacket(): " + msg;
+                String debugMsg = "Info: ProcessMemoryData::processSingleDataPacket(): " + msg;
                 Utility.DebugLog(debugMsg);
 
                 return;
-            }
-            else
-            {
-                //System.Diagnostics.Debug.WriteLine("Valid datapacket: " + line);
             }
 
             /*byte srcAddr = dataPacket.SrcAddr;
@@ -1634,24 +1498,51 @@ namespace GuidanceStsbilityCommsDownLoad
             BWCommandHeader header = cmd.Header;
             int ret = header.Return;
             int len = dataPacket.PayLoad;
-            byte[] data = cmd.Data;
+            byte[] data = cmd.Data;*/
+            int ret = 0;
+            byte[] data = dataPacketBytes;
 
-            //System.Diagnostics.Debug.Assert((data != null) && (data.Length == len - 8));
-            if (header.CmdObject == BWCommandHeader.BWEnumCmdObject.BoardInfo)
+
+            //if (address.ToolAddress == EnumToolAddress.BWNB)
+            //{
+            double[] gscData = GSCDownload.GSCTool.ProcessMemoryData(time, data);// 这是解析出的数据的数量，保存数据和解析数据都会调用
+            System.Diagnostics.Debug.Assert(gscData != null && gscData.Length == 5);
+            if (gscData == null || gscData.Length != 5) return;
+            appendGscData(time, gscData, ret, datasetList);
+            //}
+        }
+
+        private static void appendGscData(int time, double[] data1Gamma, int errCode, List<Dataset> datasetList)
+        {
+            for (int i = 0; i < 1; i++)
             {
-                BWBoardInfo info = new BWBoardInfo(data);
-                BoardInfoList.Add(info);
+                String name = ((EnumGscCurves)i).ToString();// marker 这是伽马
+                Dataset dataset = DatasetUtility.FindDatasetInList(name, datasetList);
+                if (dataset == null)
+                {
+                    dataset = new Dataset();
+                    dataset.Name = name;
+                    dataset.TotalColumns = 3;
+                    dataset.DepthType = DepthType.typeTime;
+                    dataset.DepthUnit = EnumUnit.SECONDS.ToString();
+                    dataset.DataType = DataType.typeDataGamma;// marker
+                    dataset.ValueUnit = "CPS";
 
-                return;
+                    datasetList.Add(dataset);
+                }
+                double[] temp = new double[] { time, data1Gamma[i], errCode };
+                changeNaNtoNoReading(temp);
+                dataset.AppendData(new ADataPoint(temp));
             }
+        }
+        public static void changeNaNtoNoReading(double[] data)
+        {
+            if (data == null || data.Length == 0) return;
 
-            if (address.ToolAddress == EnumToolAddress.BWNB)
+            for (int i = 0; i < data.Length; i++)
             {
-                double[] gscData = BWLWDToolsNew.MwdTool.ProcessMemoryData(time, data, ret);// 这是解析出的数据的数量，暂时不明白为啥要在这里解析一次（这里不是保存文件吗？）
-                System.Diagnostics.Debug.Assert(mwdData != null && mwdData.Length == 13);
-                if (mwdData == null || mwdData.Length != 13) return;
-                appendMwdData(time, mwdData, ret, datasetList);
-            }*/
+                if (double.IsNaN(data[i]) == true || double.IsInfinity(data[i]) == true) data[i] = Dataset.NO_READING;
+            }
         }
     }
 }

@@ -84,7 +84,7 @@ namespace MultiPort
         /// check dataPacket length against payload
         /// </summary>
         /// <returns></returns>
-        public bool isValidData()
+        public virtual bool isValidData()
         {
             if (databytes == null ||
                 databytes.Length != datalength) return false;
@@ -101,7 +101,7 @@ namespace MultiPort
             return checksum;
         }
         // 计算和校验，取低八位
-        private byte ComputeChecksum()
+        protected byte ComputeChecksum()
         {
             int sum = 0;
             for (int i = 0; i < datalength - 1; i++)
@@ -193,6 +193,15 @@ namespace MultiPort
             // 修改databyte
             databytes[databytes.Length - 1] = (byte)res;
             return res;
+        }
+
+        public override bool isValidData()
+        {
+            if(!base.isValidData()) return false;
+            byte checkSum = (byte)(0x0F & databytes[datalength - 1]);
+
+            byte checkSumCalc = (byte)(0x0F & ComputeChecksum());
+            return checkSumCalc != checkSum;// test
         }
     }
 

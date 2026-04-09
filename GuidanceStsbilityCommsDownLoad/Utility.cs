@@ -52,4 +52,8 @@ namespace GuidanceStsbilityCommsDownLoad
             sw.Close();
         }
     }
+    public enum EnumGscCurves
+    {
+        GSC = 0,
+    }
 }
