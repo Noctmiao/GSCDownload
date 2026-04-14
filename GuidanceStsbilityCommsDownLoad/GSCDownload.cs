@@ -2,6 +2,7 @@
 using BWNSLWDTools;
 using GuidanceStsbilityComms;
 using LsySkin;
+using Microsoft.Office.Interop.Excel;
 using MultiPort;
 using System;
 using System.Collections.Generic;
@@ -229,7 +230,7 @@ namespace GuidanceStsbilityCommsDownLoad
             button_dump.Enabled = false;
             button_clear.Enabled = false;
         }
-        byte SendDst = 0x3b;
+        byte SendDst = 0x13;
         private void requestMemoryInfo()
         {
             //byte dst = ToolBoardAddress.GetToolBoardAddress(0, 0);// 接收的src
@@ -311,7 +312,6 @@ namespace GuidanceStsbilityCommsDownLoad
             Array.Copy(temp, 0, data, 4, 2);
 
             CommandHeader.EnumCmdObject obj = CommandHeader.EnumCmdObject.NearBitMemory;
-            //if (whichMemory == 2 || whichMemory == 6 || whichMemory == 0) obj = BWCommandHeader.BWEnumCmdObject.NearBitMemory;// 2.修改源地址：国家项目源地址
             sentDataPacket = DataPacketDownloadlist.GenerateDataPacket(dst, obj, param, data);
 
             IsWaitingForResponse = true;
@@ -522,7 +522,7 @@ namespace GuidanceStsbilityCommsDownLoad
         private void saveDumpedDataOneRun(MemoryDataOneRun mem1r, byte[] dumpedData1r)
         {
             String memoryDir = "GSC";
-            String myProjectDataDirectory = Path.Combine(Environment.CurrentDirectory + @"\Logs", Application.ProductName + " " + Application.ProductVersion);
+            String myProjectDataDirectory = Path.Combine(Environment.CurrentDirectory + @"\Logs", System.Windows.Forms.Application.ProductName + " " + System.Windows.Forms.Application.ProductVersion);
             if (!File.Exists(myProjectDataDirectory)) Directory.CreateDirectory(myProjectDataDirectory);
             String myFileFullName = Path.Combine(myProjectDataDirectory, memoryDir);
             memoryDir = myFileFullName;
@@ -664,7 +664,7 @@ namespace GuidanceStsbilityCommsDownLoad
 
             // special handling for get RTC time
             if (receivedDataPacket.Command.Header.CmdObject == CommandHeader.EnumCmdObject.RTClock && param == (int)RTClockObject.RTClockParameter.GetRTClock)
-            {// 方位伽马第一次运行到这里CmdObject是M30Data
+            {// 第一次运行到这里CmdObject是M30Data
                 byte[] data = receivedDataPacket.Command.Data;
                 DateTime dt = RTClockObject.BytesToDateTime(data);
                 MessageBox.Show(string.Format("{0:MM/dd/yyyy HH:mm:ss}", dt));
@@ -952,7 +952,7 @@ namespace GuidanceStsbilityCommsDownLoad
         private void updateProgressBar(int sizeDumped)
         {
             // set prograss bar
-            this.progressBar1.Value = sizeDumped * 100 / totalSizeToDump;// marker,0-1
+            this.progressBar1.Value = sizeDumped * 1.0f / totalSizeToDump;// 0-1
 
             TimeSpan ts = DateTime.Now - dumpStartTime;
             double speed = (double)sizeDumped / ts.TotalSeconds;                 // bytes/second
@@ -1128,12 +1128,6 @@ namespace GuidanceStsbilityCommsDownLoad
                 MemoryDataPacket packet = dataPacketList[i];
                 if (srcToolFilter != EnumToolAddress.All && packet.Type != srcToolFilter) continue;
 
-                // fitler for nearbit's battery, res and gam
-                if (srcToolFilter == EnumToolAddress.BWNB && packet.SubType != srcBoardFilter) continue;
-
-                // filter for neutron, sonic, and density
-                if (srcToolFilter == EnumToolAddress.BWDN && packet.SubType != srcBoardFilter) continue;
-
                 item = new ListViewItem(i.ToString());
                 listViewRawData.Items.Add(item);
 
@@ -1172,16 +1166,39 @@ namespace GuidanceStsbilityCommsDownLoad
             }
 
             Dataset dataset = new Dataset();
+            if (srcToolFilter == EnumToolAddress.Gsc)
+            {
+                dataset.Name = "Gsc";
+                dataset.TotalColumns = BaseTool.NumOfDataInMem + 1;
+                dataset.ColumnNames = new String[dataset.TotalColumns];
+                dataset.ColumnNames[0] = "Time";
+                Array.Copy(BaseTool.MemoryDataNames, 0, dataset.ColumnNames, 1, BaseTool.NumOfDataInMem);
 
+                List<ADataPoint> dpList = new List<ADataPoint>();
+                for (int i = 0; i < dataPacketList.Count; i++)
+                {
+                    MemoryDataPacket packet = dataPacketList[i];
+                    if (packet.Type != srcToolFilter || packet.IsValid == false)
+                        continue;
+
+                    double time = Converter.DateTimeToSeconds(DateTime.Parse(packet.Time));
+                    double[] row = new double[dataset.TotalColumns];
+                    row[0] = time;
+                    Array.Copy(packet.RawData, 0, row, 1, BaseTool.NumOfDataInMem);
+
+                    dpList.Add(new ADataPoint(row));
+                }
+                dataset.SetData(dpList);
+            }
+            ExportToExcelHandler.ExportToExcel(dataset);
 
         }
         private void comboBoxSrcToolFilter_SelectedIndexChanged(object sender, IntEventArgs e)
         {
             if (comboBoxSrcToolFilter.SelectedIndex == 0) srcToolFilter = EnumToolAddress.All;
-            else if (comboBoxSrcToolFilter.SelectedIndex == 3) srcToolFilter = EnumToolAddress.Gamma;
-            else if (comboBoxSrcToolFilter.SelectedIndex == 7)
+            else if (comboBoxSrcToolFilter.SelectedIndex == 1)
             {
-                srcToolFilter = EnumToolAddress.BWNB;
+                srcToolFilter = EnumToolAddress.Gsc;
                 srcBoardFilter = EnumBoardAddress.NBShorthopRX;
             }
 
@@ -1283,8 +1300,8 @@ namespace GuidanceStsbilityCommsDownLoad
 
             //if (toolAddr == ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.BWNB, EnumBoardAddress.NBBatteryControl))
             //{
-            dataLength = GSCDownload.GSCTool.NumOfBytesInMem + 4;// 加上时间
-            type = EnumToolAddress.BWNB;// marker
+            dataLength = BaseTool.NumOfBytesInMem + 4;// 加上时间
+            type = EnumToolAddress.Gsc;
             subType = EnumBoardAddress.NBBatteryControl;
             //}
 
@@ -1305,7 +1322,7 @@ namespace GuidanceStsbilityCommsDownLoad
             {
                 isValid = true;
 
-                if (type == EnumToolAddress.BWNB)// marker
+                if (type == EnumToolAddress.Gsc)
                 {// marker 这里修改了调用的函数重载
                     rawData = GSCDownload.GSCTool.ProcessMemoryData(seconds, dataPacketBytes);
                     if (rawData != null && rawData.Length > 0)
@@ -1469,7 +1486,7 @@ namespace GuidanceStsbilityCommsDownLoad
         /// <param name="datasetList"></param>
         private static void processSingleDataPacket(byte[] dataPacketBytes, int time, List<Dataset> datasetList)
         {
-            if (dataPacketBytes == null || dataPacketBytes.Length != 7) return;// 
+            if (dataPacketBytes == null || dataPacketBytes.Length != 7) return;
             if (datasetList == null) return;
 
             DataPacketReceived dataPacket = new DataPacketReceived(dataPacketBytes);// 新协议
@@ -1516,7 +1533,7 @@ namespace GuidanceStsbilityCommsDownLoad
         {
             for (int i = 0; i < 1; i++)
             {
-                String name = ((EnumGscCurves)i).ToString();// marker 这是伽马
+                String name = ((EnumGscCurves)i).ToString();
                 Dataset dataset = DatasetUtility.FindDatasetInList(name, datasetList);
                 if (dataset == null)
                 {
@@ -1525,8 +1542,8 @@ namespace GuidanceStsbilityCommsDownLoad
                     dataset.TotalColumns = 3;
                     dataset.DepthType = DepthType.typeTime;
                     dataset.DepthUnit = EnumUnit.SECONDS.ToString();
-                    dataset.DataType = DataType.typeDataGamma;// marker
-                    dataset.ValueUnit = "CPS";
+                    dataset.DataType = DataType.typeDataGsc;// marker
+                    //dataset.ValueUnit = "CPS";
 
                     datasetList.Add(dataset);
                 }
@@ -1543,6 +1560,69 @@ namespace GuidanceStsbilityCommsDownLoad
             {
                 if (double.IsNaN(data[i]) == true || double.IsInfinity(data[i]) == true) data[i] = Dataset.NO_READING;
             }
+        }
+    }
+
+    public static class ExportToExcelHandler
+    {
+        public static void ExportToExcel(Dataset dataset)
+        {
+            if (dataset == null || dataset.TotalRecords == 0)
+            {
+                MessageBox.Show("No curves to export!");
+                return;
+            }
+
+            Microsoft.Office.Interop.Excel.Application xlsxApp = new Microsoft.Office.Interop.Excel.Application();
+            Workbook xlsxWB = xlsxApp.Workbooks.Add(Type.Missing);
+
+            // Mwd curves
+            Worksheet xlsxWS = (Worksheet)xlsxWB.Worksheets.get_Item(1);
+            exportCurve(dataset, dataset.DataType, dataset.Name, xlsxWS);
+
+            xlsxApp.Visible = true;
+            xlsxApp.UserControl = true;
+        }
+        private static void exportCurve(Dataset dataset, DataType dataType, String sheetName, Worksheet xlsxWS)
+        {
+            if (dataset == null) return;
+
+            // set worksheet name
+            xlsxWS.Name = dataset.Name;
+
+            Range range = xlsxWS.get_Range("A1", System.Reflection.Missing.Value);
+            double[] data = null;
+            int totalRecords = 0;
+
+            dataset.GetData(out totalRecords, out data);
+            int totalColumns = dataset.TotalColumns;
+
+            // set column names
+            String[,] columnNames = new string[1, totalColumns];
+            for (int j = 0; j < totalColumns; j++) columnNames[0, j] = dataset.ColumnNames[j];
+            range = xlsxWS.get_Range("A1", Type.Missing);
+            range = range.get_Resize(1, totalColumns);
+            range.set_Value(Type.Missing, columnNames);
+
+            // set time data
+            String[,] dataTime = new String[totalRecords, 1];
+            for (int i = 0; i < totalRecords; i++) dataTime[i, 0] = Converter.SecondsToLongTime(data[totalColumns * i]);
+            //range.get_Range(xlsxWS.Cells[2, 1], xlsxWS.Cells[2 + totalRecords, 1]);
+            range = xlsxWS.get_Range("A2", Type.Missing);
+            range = range.get_Resize(totalRecords, 1);
+            range.set_Value(Type.Missing, dataTime);
+
+            // set data
+            double[,] values = new double[totalRecords, totalColumns - 1];
+            for (int i = 0; i < totalRecords; i++)
+            {
+                for (int j = 1; j < totalColumns; j++) values[i, j - 1] = data[totalColumns * i + j];
+            }
+
+            //range.get_Range(xlsxWS.Cells[2,2], xlsxWS.Cells[2+totalRecords, 2+totalColumns]);
+            range = xlsxWS.get_Range("B2", Type.Missing);
+            range = range.get_Resize(totalRecords, totalColumns - 1);
+            range.set_Value(Type.Missing, values);
         }
     }
 }

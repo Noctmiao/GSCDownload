@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             AntdUI.Tabs.StyleLine styleLine1 = new AntdUI.Tabs.StyleLine();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GSCDownload));
             this.pageHeader1 = new AntdUI.PageHeader();
             this.tabs_menu = new AntdUI.Tabs();
             this.download = new AntdUI.TabPage();
@@ -87,8 +88,9 @@
             this.pageHeader1.Name = "pageHeader1";
             this.pageHeader1.ShowButton = true;
             this.pageHeader1.Size = new System.Drawing.Size(636, 35);
+            this.pageHeader1.SubText = "GSCDownload";
             this.pageHeader1.TabIndex = 0;
-            this.pageHeader1.Text = "pageHeader1";
+            this.pageHeader1.Text = "全旋转内存下载";
             // 
             // tabs_menu
             // 
@@ -307,6 +309,7 @@
             this.exportdata.Dock = System.Windows.Forms.DockStyle.Fill;
             this.exportdata.Location = new System.Drawing.Point(0, 36);
             this.exportdata.Name = "exportdata";
+            this.exportdata.Padding = new System.Windows.Forms.Padding(10, 5, 10, 10);
             this.exportdata.Size = new System.Drawing.Size(636, 565);
             this.exportdata.TabIndex = 1;
             this.exportdata.Text = "原始数据";
@@ -324,9 +327,9 @@
             this.listViewRawData.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.listViewRawData.FullRowSelect = true;
             this.listViewRawData.HideSelection = false;
-            this.listViewRawData.Location = new System.Drawing.Point(0, 156);
+            this.listViewRawData.Location = new System.Drawing.Point(10, 161);
             this.listViewRawData.Name = "listViewRawData";
-            this.listViewRawData.Size = new System.Drawing.Size(636, 409);
+            this.listViewRawData.Size = new System.Drawing.Size(616, 394);
             this.listViewRawData.TabIndex = 7;
             this.listViewRawData.UseCompatibleStateImageBehavior = false;
             this.listViewRawData.View = System.Windows.Forms.View.Details;
@@ -373,9 +376,9 @@
             this.gridPanel1.Controls.Add(this.label2);
             this.gridPanel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.gridPanel1.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.gridPanel1.Location = new System.Drawing.Point(0, 89);
+            this.gridPanel1.Location = new System.Drawing.Point(10, 94);
             this.gridPanel1.Name = "gridPanel1";
-            this.gridPanel1.Size = new System.Drawing.Size(636, 67);
+            this.gridPanel1.Size = new System.Drawing.Size(616, 67);
             this.gridPanel1.Span = "80 35% 35% 25%;\r\n80 35% 35% 25%;";
             this.gridPanel1.TabIndex = 2;
             this.gridPanel1.Text = "gridPanel1";
@@ -385,18 +388,18 @@
             this.comboBoxRawOrCalcData.Items.AddRange(new object[] {
             "Raw Data",
             "Calc Data"});
-            this.comboBoxRawOrCalcData.Location = new System.Drawing.Point(469, 34);
+            this.comboBoxRawOrCalcData.Location = new System.Drawing.Point(455, 34);
             this.comboBoxRawOrCalcData.Margin = new System.Windows.Forms.Padding(0);
             this.comboBoxRawOrCalcData.Name = "comboBoxRawOrCalcData";
-            this.comboBoxRawOrCalcData.Size = new System.Drawing.Size(139, 34);
+            this.comboBoxRawOrCalcData.Size = new System.Drawing.Size(134, 34);
             this.comboBoxRawOrCalcData.TabIndex = 11;
             this.comboBoxRawOrCalcData.SelectedIndexChanged += new AntdUI.IntEventHandler(this.comboBoxRawOrCalcData_SelectedIndexChanged);
             // 
             // label4
             // 
-            this.label4.Location = new System.Drawing.Point(278, 37);
+            this.label4.Location = new System.Drawing.Point(271, 37);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(189, 28);
+            this.label4.Size = new System.Drawing.Size(182, 28);
             this.label4.TabIndex = 10;
             this.label4.Text = "选择数据";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -406,9 +409,8 @@
             this.textBoxEnd.Location = new System.Drawing.Point(80, 34);
             this.textBoxEnd.Margin = new System.Windows.Forms.Padding(0);
             this.textBoxEnd.Name = "textBoxEnd";
-            this.textBoxEnd.Size = new System.Drawing.Size(195, 34);
+            this.textBoxEnd.Size = new System.Drawing.Size(188, 34);
             this.textBoxEnd.TabIndex = 7;
-            this.textBoxEnd.Text = "01/10/2004 13:37:42";
             // 
             // label3
             // 
@@ -423,31 +425,19 @@
             // 
             this.comboBoxSrcToolFilter.Items.AddRange(new object[] {
             "All",
-            "Mwd",
-            "Res",
-            "Gam",
-            "NB-Battery",
-            "NB-Res",
-            "NB-Gam",
-            "NB-Rx",
-            "Pwd",
-            "Neutron",
-            "Sonic",
-            "Density",
-            "DirRes",
-            "RSS"});
-            this.comboBoxSrcToolFilter.Location = new System.Drawing.Point(469, 0);
+            "Gsc"});
+            this.comboBoxSrcToolFilter.Location = new System.Drawing.Point(455, 0);
             this.comboBoxSrcToolFilter.Margin = new System.Windows.Forms.Padding(0);
             this.comboBoxSrcToolFilter.Name = "comboBoxSrcToolFilter";
-            this.comboBoxSrcToolFilter.Size = new System.Drawing.Size(139, 34);
+            this.comboBoxSrcToolFilter.Size = new System.Drawing.Size(134, 34);
             this.comboBoxSrcToolFilter.TabIndex = 6;
             this.comboBoxSrcToolFilter.SelectedIndexChanged += new AntdUI.IntEventHandler(this.comboBoxSrcToolFilter_SelectedIndexChanged);
             // 
             // label1
             // 
-            this.label1.Location = new System.Drawing.Point(278, 3);
+            this.label1.Location = new System.Drawing.Point(271, 3);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(189, 28);
+            this.label1.Size = new System.Drawing.Size(182, 28);
             this.label1.TabIndex = 7;
             this.label1.Text = "选择属性";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -457,9 +447,8 @@
             this.textBoxStart.Location = new System.Drawing.Point(80, 0);
             this.textBoxStart.Margin = new System.Windows.Forms.Padding(0);
             this.textBoxStart.Name = "textBoxStart";
-            this.textBoxStart.Size = new System.Drawing.Size(195, 34);
+            this.textBoxStart.Size = new System.Drawing.Size(188, 34);
             this.textBoxStart.TabIndex = 6;
-            this.textBoxStart.Text = "01/10/2004 13:37:42";
             // 
             // label2
             // 
@@ -475,18 +464,18 @@
             this.gridPanel2.Controls.Add(this.buttonExportToExcel2);
             this.gridPanel2.Controls.Add(this.buttonRawFile);
             this.gridPanel2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.gridPanel2.Location = new System.Drawing.Point(0, 38);
+            this.gridPanel2.Location = new System.Drawing.Point(10, 43);
             this.gridPanel2.Name = "gridPanel2";
-            this.gridPanel2.Size = new System.Drawing.Size(636, 51);
+            this.gridPanel2.Size = new System.Drawing.Size(616, 51);
             this.gridPanel2.Span = "80% 20%";
             this.gridPanel2.TabIndex = 6;
             this.gridPanel2.Text = "gridPanel2";
             // 
             // buttonExportToExcel2
             // 
-            this.buttonExportToExcel2.Location = new System.Drawing.Point(512, 3);
+            this.buttonExportToExcel2.Location = new System.Drawing.Point(496, 3);
             this.buttonExportToExcel2.Name = "buttonExportToExcel2";
-            this.buttonExportToExcel2.Size = new System.Drawing.Size(121, 45);
+            this.buttonExportToExcel2.Size = new System.Drawing.Size(117, 45);
             this.buttonExportToExcel2.TabIndex = 7;
             this.buttonExportToExcel2.Text = "导出到Excel";
             this.buttonExportToExcel2.Type = AntdUI.TTypeMini.Primary;
@@ -499,7 +488,7 @@
             this.buttonRawFile.IconSvg = "";
             this.buttonRawFile.Location = new System.Drawing.Point(3, 3);
             this.buttonRawFile.Name = "buttonRawFile";
-            this.buttonRawFile.Size = new System.Drawing.Size(503, 45);
+            this.buttonRawFile.Size = new System.Drawing.Size(487, 45);
             this.buttonRawFile.TabIndex = 1;
             this.buttonRawFile.Text = "Click or drag file to this area to upload";
             this.buttonRawFile.TextDesc = "原始内存文件(.dump)";
@@ -510,9 +499,9 @@
             this.pageHeader3.Dock = System.Windows.Forms.DockStyle.Top;
             this.pageHeader3.Font = new System.Drawing.Font("微软雅黑", 12F);
             this.pageHeader3.HandCursor = System.Windows.Forms.Cursors.Arrow;
-            this.pageHeader3.Location = new System.Drawing.Point(0, 0);
+            this.pageHeader3.Location = new System.Drawing.Point(10, 5);
             this.pageHeader3.Name = "pageHeader3";
-            this.pageHeader3.Size = new System.Drawing.Size(636, 38);
+            this.pageHeader3.Size = new System.Drawing.Size(616, 38);
             this.pageHeader3.SubGap = 0;
             this.pageHeader3.TabIndex = 5;
             this.pageHeader3.Text = "文件解析";
@@ -525,6 +514,8 @@
             this.ClientSize = new System.Drawing.Size(636, 636);
             this.Controls.Add(this.tabs_menu);
             this.Controls.Add(this.pageHeader1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MinimumSize = new System.Drawing.Size(300, 400);
             this.Name = "GSCDownload";
             this.Text = "Form1";
             this.tabs_menu.ResumeLayout(false);

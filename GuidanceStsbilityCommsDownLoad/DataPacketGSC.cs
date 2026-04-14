@@ -101,7 +101,7 @@ namespace MultiPort
             return checksum;
         }
         // 计算和校验，取低八位
-        protected byte ComputeChecksum()
+        protected virtual byte ComputeChecksum()
         {
             int sum = 0;
             for (int i = 0; i < datalength - 1; i++)
@@ -186,22 +186,22 @@ namespace MultiPort
         // 高4位不变
         protected override byte Checksum()
         {
-            byte highbyte = databytes[datalength - 1];
-            byte lowbyte = (byte)(base.Checksum() + (databytes[datalength - 1] >> 4));// 7个字节的高4位作为低4位加进去
-            byte res = (byte)((highbyte & 0xF0) | (lowbyte & 0x0F));
-
+            byte res = ComputeChecksum();
             // 修改databyte
             databytes[databytes.Length - 1] = (byte)res;
             return res;
         }
-
+        protected override byte ComputeChecksum()
+        {
+            byte highbyte = databytes[datalength - 1];
+            byte lowbyte = (byte)(base.ComputeChecksum() + (databytes[datalength - 1] >> 4));// 7个字节的高4位作为低4位加进去
+            byte res = (byte)((highbyte & 0xF0) | (lowbyte & 0x0F));
+            return res;
+        }
         public override bool isValidData()
         {
             if(!base.isValidData()) return false;
-            byte checkSum = (byte)(0x0F & databytes[datalength - 1]);
-
-            byte checkSumCalc = (byte)(0x0F & ComputeChecksum());
-            return checkSumCalc != checkSum;// test
+            return ComputeChecksum() == databytes[datalength - 1];
         }
     }
 
@@ -359,7 +359,7 @@ namespace MultiPort
         public static DataPacketDownloadlist GenerateDataPacket(byte dst, CommandHeader.EnumCmdObject cmdObject, int param, byte[] data)
         {
             //byte src = ToolBoardAddress.GetToolBoardAddress(EnumToolAddress.Surface, EnumBoardAddress.Computer);    // (0x0E) Surface Computer
-            byte src = 0x3e;    // (0x0E) Surface Computer
+            byte src = 0x0e;    // (0x0E) Surface Computer
 
             int len = 8 + ((data == null) ? 0 : data.Length);
             int ret = 0;

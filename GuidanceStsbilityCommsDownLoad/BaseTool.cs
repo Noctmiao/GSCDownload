@@ -19,8 +19,8 @@ namespace GuidanceStsbilityComms
                 0x0b,0x0c,0x0d,0x0e,0x0f,0x10,
                 0x11,0x12,0x16
             };
-        public int NumOfDataInMem = 5;// 内存中存储数据个数
-        public int NumOfBytesInMem = 7;// 内存中数据长度
+        public static int NumOfDataInMem = 5;// 内存中存储数据个数
+        public static int NumOfBytesInMem = 7;// 内存中数据长度
 
         public bool IsGravityToolface// 工具面
         {
@@ -158,7 +158,15 @@ namespace GuidanceStsbilityComms
         {
             return String.Concat(String.Join(",", valuePairs.Keys), ",", String.Join(",", valuePairs.Values));
         }
-
+        public static string[] MemoryDataNames
+        {
+            get
+            {
+                string[] names = new string[NumOfDataInMem];
+                for (int i = 0; i < NumOfDataInMem; i++) names[i] = ((EnumGscCurves)i).ToString();
+                return names;
+            }
+        }
         public double[] ProcessMemoryData(int time, byte[] data7Bytes)
         {
             if (data7Bytes == null || data7Bytes.Length != DataNumofBytes) return null;
@@ -169,7 +177,7 @@ namespace GuidanceStsbilityComms
             data[1] = bt.IsGravityToolface ? 1 : 0;
             data[2] = bt.Toolface;
             data[3] = bt.Gyrospeed;
-            data[4] = bt.parameter;
+            data[4] = bt.Parameter;
             //MemoryLog(time, data, errCode, LogFileName);// 写入日志感觉不需要
 
             double[] gscData = data;

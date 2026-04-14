@@ -338,6 +338,29 @@ namespace GuidanceStsbilityCommsDownLoad
             return dt.ToString("yyyyMMdd HHmmss");
             //return dt.ToString("HH:mm:ss");
         }
+        /// <summary>
+        /// converts a dateTime to total seconds from 1/1/1970
+        /// </summary>
+        /// <param name="dateTime"></param>
+        /// <returns></returns>
+        public static double DateTimeToSeconds(DateTime dateTime)
+        {
+            TimeSpan ts = dateTime - new DateTime(1970, 1, 1);
+
+            if (ts.TotalSeconds < 0) return 0;
+            else return ts.TotalSeconds;
+        }
+        /// <summary>
+        /// "HH:mm:ss"
+        /// </summary>
+        /// <param name="seconds">total seconds from 1/1/1970</param>
+        /// <returns></returns>
+        public static String SecondsToLongTime(double seconds)
+        {
+            DateTime dt = new DateTime(1970, 1, 1).AddSeconds(seconds);
+            //return dt.ToString("MM/dd/yyyy HH:mm:ss");
+            return dt.ToString("yyyy/MM/dd HH:mm:ss");
+        }
         #endregion
         # region Basic type from/to bytes
         /// <summary>

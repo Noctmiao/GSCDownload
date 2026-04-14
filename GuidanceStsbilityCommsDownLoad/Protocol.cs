@@ -388,16 +388,7 @@ namespace GuidanceStsbilityCommsDownLoad
     public enum EnumToolAddress
     {
         All = 0x00,
-        Surface = 0x01,
-        Bootloader = 0x01,
-        MWD = 0x02,
-        Resisitivity = 0x03,
-        Gamma = 0x04,
-        BWRX = 0x05,
-        BWDN = 0x06,
-        BWNB = 0x07,
-        BWRS = 0x08,
-        BWPV = 0X09,
+        Gsc = 0x01,
     }
     public enum EnumBoardAddress
     {

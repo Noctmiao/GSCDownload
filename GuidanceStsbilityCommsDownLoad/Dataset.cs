@@ -13,42 +13,8 @@ namespace GuidanceStsbilityCommsDownLoad
     {
         typeDataUnknown = 0,
         typeDataCurve = 1,
-        typeDataSurvey = 2,
-        typeDataRt = 3,
-        typeDataTops = 4,
+        typeDataGsc = 2,
 
-        typeDataMapNorthEast = 5,   // north, east coordinates on a map
-
-        typeDataMapPoints = 6,   // map object: points
-        typeDataMapPolyLine = 7,   // map object: polyline
-        typeDataMapArc = 8,   // map object: arc
-
-        typeDataActualSurvey = 9,
-        typeDataInterpSurvey = 10,
-
-        typeDataGeologyBed = 11,
-        typeDataMarkerBed = 12,
-        //typeDataImage           = 13,
-
-        typeDataMwd = 14,
-        typeDataGamma = 15,
-        typeDataResistivity = 16,
-        //typeDataDirRes          = 17,
-        typeDataImageDirRes = 17,
-        typeDataNBBatteryStatus = 18,
-        typeDataNBResistivity = 19,
-        typeDataNBGamma = 20,
-        typeDataImageNBGamma = 21,
-        typeDataNBOthers = 22,       // TEM, INC, RPM
-        typeDataPwd = 23,
-
-        typeDataDNDensity = 30,
-        typeDataDNSonic = 31,
-        typeDataDNNeutron = 32,
-
-        typeDataRSShorthop = 33,
-        typeDataDNMaster = 34,
-        typeDataRSDownlink = 35,
     };
     public enum DataMergeOption
     {

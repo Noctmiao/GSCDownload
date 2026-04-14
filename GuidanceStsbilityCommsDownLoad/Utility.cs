@@ -54,6 +54,10 @@ namespace GuidanceStsbilityCommsDownLoad
     }
     public enum EnumGscCurves
     {
-        GSC = 0,
+        功能码 = 0,
+        is重力 = 1,
+        工具面 = 2,
+        陀螺转速 = 3,
+        定向参数 = 4,
     }
 }
