@@ -1,5 +1,4 @@
 ﻿using AntdUI;
-using BWNSLWDTools;
 using GuidanceStsbilityComms;
 using LsySkin;
 using Microsoft.Office.Interop.Excel;
@@ -676,7 +675,8 @@ namespace GuidanceStsbilityCommsDownLoad
                 case (int)(ToolSpecificObject.EnumMemoryParameter.Clear):
                     if (responseClearMemory(receivedDataPacket) == true)
                     {
-                        MessageBox.Show(MyStrings.String_Clear_memory_successful);
+                        //MessageBox.Show(MyStrings.String_Clear_memory_successful);
+                        MessageBox.Show("删除内存成功");
                         progressBar1.Value = 1;// 最大
                         timerDump2.Enabled = false;
                         enableControls(true);
@@ -690,7 +690,8 @@ namespace GuidanceStsbilityCommsDownLoad
                             isFirstResponse = false;
                             IsWaitingForResponse = true;    // keep waiting
                         }
-                        else MessageBox.Show(MyStrings.String_Failed_to_dump_memory);
+                        //else MessageBox.Show(MyStrings.String_Failed_to_dump_memory);
+                        else MessageBox.Show("删除内存失败");
                     }
                     break;
                 case (int)(ToolSpecificObject.EnumMemoryParameter.GetMemoryInfo):// 第一次运行到这里
@@ -971,7 +972,8 @@ namespace GuidanceStsbilityCommsDownLoad
 
             if (listViewRuns.SelectedIndices == null || listViewRuns.SelectedIndices.Count == 0)
             {
-                MessageBox.Show(MyStrings.String_Please_select_a_run_number);// marker
+                //MessageBox.Show(MyStrings.String_Please_select_a_run_number);// marker
+                AntdUI.Message.info(this, "请选择一个");
                 return;
             }
 
@@ -1051,8 +1053,9 @@ namespace GuidanceStsbilityCommsDownLoad
 
         private void button_clear_Click(object sender, EventArgs e)
         {
-            String warningMsg = MyStrings.String_Do_you_want_to_clear_whole_memory;
-            if (MessageBox.Show(warningMsg, MyStrings.String_Clear_Memory, MessageBoxButtons.OKCancel) == DialogResult.Cancel) return;
+            String warningMsg = "确定删除所有内存吗？";//MyStrings.String_Do_you_want_to_clear_whole_memory;
+            //if (MessageBox.Show(warningMsg, MyStrings.String_Clear_Memory, MessageBoxButtons.OKCancel) == DialogResult.Cancel) return;
+            if (MessageBox.Show(warningMsg, "清空内存", MessageBoxButtons.OKCancel) == DialogResult.Cancel) return;
 
             isFirstResponse = true;
             requestClearMemory();

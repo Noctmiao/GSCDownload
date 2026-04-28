@@ -71,7 +71,6 @@
       <DependentUpon>GSCDownload.cs</DependentUpon>
     </Compile>
     <Compile Include="icsNeoClass.cs" />
-    <Compile Include="MyStrings.Designer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Communication.cs" />
@@ -82,7 +81,6 @@
     <EmbeddedResource Include="GSCDownload.resx">
       <DependentUpon>GSCDownload.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="MyStrings.resx" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
