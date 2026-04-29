@@ -693,6 +693,7 @@ namespace GuidanceStsbilityCommsDownLoad
                         //else MessageBox.Show(MyStrings.String_Failed_to_dump_memory);
                         else MessageBox.Show("删除内存失败");
                     }
+                    this.Cursor = Cursors.Default;
                     break;
                 case (int)(ToolSpecificObject.EnumMemoryParameter.GetMemoryInfo):// 第一次运行到这里
                     responseMemoryInfo(receivedDataPacket);
@@ -1061,6 +1062,7 @@ namespace GuidanceStsbilityCommsDownLoad
             requestClearMemory();
 
             enableControls(false);
+            this.Cursor = Cursors.WaitCursor;// 等待
         }
 
         #region 解析
