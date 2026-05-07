@@ -517,6 +517,7 @@
             this.MinimumSize = new System.Drawing.Size(300, 400);
             this.Name = "GSCDownload";
             this.Text = "GSCDownload";
+            this.Load += new System.EventHandler(this.GSCDownload_Load);
             this.tabs_menu.ResumeLayout(false);
             this.download.ResumeLayout(false);
             this.download.PerformLayout();

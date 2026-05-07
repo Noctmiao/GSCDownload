@@ -1216,9 +1216,13 @@ namespace GuidanceStsbilityCommsDownLoad
 
             display();
         }
+
         #endregion
 
-
+        private async void GSCDownload_Load(object sender, EventArgs e)
+        {
+            await Updater.CheckUpdateAsync();
+        }
     }
 
 
