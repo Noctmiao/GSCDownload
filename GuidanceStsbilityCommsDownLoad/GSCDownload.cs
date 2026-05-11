@@ -1097,7 +1097,9 @@ namespace GuidanceStsbilityCommsDownLoad
                 endTime = dataPacketList[dataPacketList.Count - 1].Time;
             }
 
-            display();
+            //display();
+            comboBoxSrcToolFilter.SelectedIndex = 1;
+            comboBoxRawOrCalcData.SelectedIndex = 0;// 默认选择gsc的rawdata
         }
         private byte[] loadDumpedDataOneRun(String fileName)
         {
