@@ -16,7 +16,8 @@ public class UpdateInfo
 public class Updater
 {
     // ⭐ 改成你的 version.json 地址（非常重要）
-    private static string versionUrl = "https://orange-lake-c42d.noctmew.workers.dev";
+    //private static string versionUrl = "https://orange-lake-c42d.noctmew.workers.dev";
+    private static string versionUrl = "https://gscdowndate-api-cplclhnzxx.cn-qingdao.fcapp.run";
 
     public static async Task CheckUpdateAsync()
     {
@@ -30,7 +31,7 @@ public class Updater
                 json = await client.DownloadStringTaskAsync(versionUrl);
             }
 
-            UpdateInfo info = JsonConvert.DeserializeObject<UpdateInfo>(json);
+            /*UpdateInfo info = JsonConvert.DeserializeObject<UpdateInfo>(json);
 
             string currentVersion = Application.ProductVersion;
 
@@ -45,12 +46,56 @@ public class Updater
                 {
                     await DownloadAndInstall(info.url);
                 }
+            }*/
+
+            // 兼容两种格式（非常重要）
+            dynamic rawObj = JsonConvert.DeserializeObject(json);
+
+            string realJson;
+
+            // ⭐ 如果有 body，说明是 FC 标准返回
+            if (rawObj.body != null)
+            {
+                realJson = rawObj.body.ToString();
+            }
+            else
+            {
+                // ⭐ 如果没有 body，直接用原 JSON
+                realJson = json;
+            }
+
+            // ⭐ 修改3：真正解析更新信息
+            UpdateInfo info =
+                JsonConvert.DeserializeObject<UpdateInfo>(realJson);
+
+            string currentVersion =
+                Application.ProductVersion;
+
+            if (new Version(info.version) >
+                new Version(currentVersion))
+            {
+                DialogResult result = MessageBox.Show(
+                    "发现新版本：" + info.version +
+                    "\n\n" +
+                    info.desc +
+                    "\n\n是否更新？",
+
+                    "更新提示",
+
+                    MessageBoxButtons.YesNo);
+
+                if (result == DialogResult.Yes)
+                {
+                    await DownloadAndInstall(info.url);
+                }
             }
         }
         catch (Exception ex)
         {
             // 建议静默，不影响用户使用
             Console.WriteLine("更新失败：" + ex.Message);
+            MessageBox.Show(
+                "更新失败：\n" + ex.Message);
         }
     }
 
