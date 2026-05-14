@@ -94,8 +94,8 @@ public class Updater
         {
             // 建议静默，不影响用户使用
             Console.WriteLine("更新失败：" + ex.Message);
-            MessageBox.Show(
-                "更新失败：\n" + ex.Message);
+            //MessageBox.Show(
+            //    "更新失败：\n" + ex.Message);
         }
     }
 

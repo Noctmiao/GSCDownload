@@ -96,14 +96,13 @@
             // 
             this.tabs_menu.Controls.Add(this.download);
             this.tabs_menu.Controls.Add(this.exportdata);
-            this.tabs_menu.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.tabs_menu.Cursor = System.Windows.Forms.Cursors.Default;
             this.tabs_menu.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabs_menu.Font = new System.Drawing.Font("微软雅黑", 12F);
             this.tabs_menu.Location = new System.Drawing.Point(0, 35);
             this.tabs_menu.Name = "tabs_menu";
             this.tabs_menu.Pages.Add(this.download);
             this.tabs_menu.Pages.Add(this.exportdata);
-            this.tabs_menu.SelectedIndex = 1;
             this.tabs_menu.Size = new System.Drawing.Size(636, 601);
             this.tabs_menu.Style = styleLine1;
             this.tabs_menu.TabIndex = 1;
@@ -113,7 +112,8 @@
             // 
             this.download.Controls.Add(this.panel1);
             this.download.Controls.Add(this.flowLayoutPanel_head);
-            this.download.Location = new System.Drawing.Point(-1272, -1130);
+            this.download.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.download.Location = new System.Drawing.Point(0, 36);
             this.download.Name = "download";
             this.download.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
             this.download.Size = new System.Drawing.Size(636, 565);
@@ -306,8 +306,7 @@
             this.exportdata.Controls.Add(this.gridPanel1);
             this.exportdata.Controls.Add(this.gridPanel2);
             this.exportdata.Controls.Add(this.pageHeader3);
-            this.exportdata.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.exportdata.Location = new System.Drawing.Point(0, 36);
+            this.exportdata.Location = new System.Drawing.Point(-1272, -1130);
             this.exportdata.Name = "exportdata";
             this.exportdata.Padding = new System.Windows.Forms.Padding(10, 5, 10, 10);
             this.exportdata.Size = new System.Drawing.Size(636, 565);
